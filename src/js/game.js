@@ -5,14 +5,14 @@ function _get(q) {
 
 function Brik() {
 	var CANVAS = _get('#game-canvas'),
-		c = CANVAS.getContext('2d'),
-		gameW = CANVAS.width,
-		gameH = CANVAS.height;
+		c = window.c = CANVAS.getContext('2d'),
+		gameW = window.gameW = CANVAS.width,
+		gameH = window.gameH = CANVAS.height;
 		
 	
 	function spawnBricks(rows, columns, height) {
-		var width = gameW/columns,
-			height = height/100*gameH;
+		var width = parseInt(gameW/columns),
+			height = parseInt(height/100*gameH);
 			
 		function randomColor() {
 			return '#'+Math.floor(Math.random()*16777215).toString(16);

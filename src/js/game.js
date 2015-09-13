@@ -5,9 +5,9 @@ function _get(q) {
 
 function Brik() {
 	var CANVAS = _get('#game-canvas'),
-		c = window.c = CANVAS.getContext('2d'),
-		gameW = window.gameW = CANVAS.width,
-		gameH = window.gameH = CANVAS.height;
+		gameW = _get('#container').getBoundingClientRect().width,
+		gameH = _get('#container').getBoundingClientRect().height,
+		c;
 		
 	
 	function spawnBricks(rows, columns, height) {
@@ -25,6 +25,9 @@ function Brik() {
 			}
 		}
 	}
+	
+	CANVAS.width = CANVAS.height = gameW > gameH ? gameH : gameW;
+	c = window.c = CANVAS.getContext('2d');
 	
 	spawnBricks(10, 10, 5);
 }

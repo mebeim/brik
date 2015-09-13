@@ -1,0 +1,26 @@
+body {
+	background: #141414;
+	margin: 0;
+	padding: 0;
+	position: relative;
+}
+
+#game-canvas {
+	display: block;
+	width: auto;
+	height: auto;
+	margin: auto;
+	background: pink;
+}
+
+@media screen and (orientation: landscape) {
+	#game-canvas {
+		height: 100%;
+	}
+}
+
+@media screen and (orientation: portrait) {
+	#game-canvas {
+		width: 100%;
+	}
+}

@@ -2,25 +2,34 @@ body {
 	background: #141414;
 	margin: 0;
 	padding: 0;
-	position: relative;
+}
+
+#container {
+	display: flex;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
 }
 
 #game-canvas {
 	display: block;
 	width: auto;
 	height: auto;
-	margin: auto;
 	background: pink;
+	margin: auto;
 }
 
 @media screen and (orientation: landscape) {
 	#game-canvas {
-		height: 100%;
+		width: 100vh;
+		height: 100vh;
 	}
 }
 
 @media screen and (orientation: portrait) {
 	#game-canvas {
-		width: 100%;
+		width: 100vw;
+		height: 100vw;
 	}
 }

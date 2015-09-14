@@ -52,7 +52,8 @@ function Game() {
 		var r = 7/100*gameW,
 			h = 1/100*gameH,
 			x = gameW/2,
-			y = gameH-h;
+			y = gameH-h,
+			hitbox = false; // hitbox prevents the ball from hitting the pad more than once
 	
 		function draw() {
 			c.fillStyle = 'white';
@@ -63,7 +64,7 @@ function Game() {
 		}
 
 		this.direction = false;
-		this.speed = 10;
+		this.speed = 15;
 		this.newTeta = 0;
 		
 		this.collision = function(ballX, ballY, ballR, ballTeta) {
@@ -75,9 +76,16 @@ function Game() {
 			c.fillRect(x, y, dX, h);
 			fastLine(ballX, ballY, ballX + 1000*Math.cos(-ballTeta), ballY + 1000*Math.sin(-ballTeta), 'pink', 2);
 			
-			if (Math.abs(dX) <= r && ballY+ballR >= y) {
-				
+			if (!(Math.abs(dX) <= r || ballY+ballR >= y)) hitbox = false;
+			
+			if (!hitbox && Math.abs(dX) <= r && ballY+ballR >= y) {
+				hitbox = true;
 				this.newTeta = 2*pi - ballTeta;
+				
+				// Deviation of the ball 
+				if (dX > r/5) this.newTeta -= (this.newTeta-pi/72)*dX/r;
+				else if (dX < r/5) this.newTeta -= (pi-this.newTeta-pi/72)*dX/r
+				
 				return true;
 			}
 			return false;
@@ -113,9 +121,7 @@ function Game() {
 			x = gameW/2,
 			y = gameH - gameH/100*5,
 			teta = Math.random()*4*pi/6 + pi/6,
-			speed = 10;
-			
-		console.log(teta/Math.PI*360);
+			speed = 15;
 			
 		function draw() {
 			c.fillStyle = 'lightgrey';

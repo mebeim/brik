@@ -1,8 +1,3 @@
-function _get(q) {
-	if (q[0] === '*') return document.querySelectorAll(q.substr(1)); 
-	else return document.querySelector(q);
-}
-
 Object.defineProperties(Number.prototype, {
 	'between': {
 		value: function(a, b) {
@@ -18,6 +13,11 @@ Object.defineProperties(Number.prototype, {
 		}
 	}
 });
+
+function _get(q) {
+	if (q[0] === '*') return document.querySelectorAll(q.substr(1)); 
+	else return document.querySelector(q);
+}
 
 function Game() {
 	var CANVAS		= _get('#game-canvas'),
@@ -64,7 +64,6 @@ function Game() {
 		}
 		
 		this.collision = function(ballX, ballY, ballR, ballTeta) {
-			// returns true if the brick gets hit by the ball
 			var distX = Math.abs(ballX - x - w/2),
 				distY = Math.abs(ballY - y - h/2),
 				dX2 = Math.pow(distX - w/2, 2),
@@ -73,11 +72,12 @@ function Game() {
 			if (distX <= w/2+ballR && distY <= h/2+ballR) {
 				void(0);
 				
-				if (ballX.between(x-ballR, x2+ballR) && ballY.between(y, y2))		// vertical borders
+				if (ballX.between(x-ballR, x2+ballR) && ballY.between(y, y2))		// Vertical borders
 					this.newTeta = ballTeta <= pi ? pi - ballTeta : 3*pi - ballTeta;
-				else if (ballY.between(y-ballR, y2+ballR) && ballX.between(x, x2))	// horizontal borders
+				else if (ballY.between(y-ballR, y2+ballR) && ballX.between(x, x2))	// Horizontal borders
 					this.newTeta =  2*pi - ballTeta;
-				else if (dX2 + dY2 <= ballR*ballR)									// vertexes
+				else if (dX2 + dY2 <= ballR*ballR)									// Vertexes
+					// To fix: this is wrong, find a decent equation
 					this.newTeta = -ballTeta - pi + 2*Math.atan((y-y2)/(x-x2));
 				else this.newTeta = ballTeta;
 				
@@ -91,7 +91,7 @@ function Game() {
 		var r = 7/100*gameW,
 			h = 1/100*gameH,
 			x = gameW/2,
-			y = gameH-h; // hitbox prevents the ball from hitting the pad more than once
+			y = gameH-h;
 	
 		function draw() {
 			c.fillStyle = 'white';
@@ -100,9 +100,10 @@ function Game() {
 			// DEBUG
 			fastLine(x, y, x, 0, 'white', 2);
 		}
-
-		this.direction = false;
+		
+		// To do: make speeds relative to canvas size
 		this.speed = 15;
+		this.direction = false;
 		this.newTeta = 0;
 		
 		this.collision = function(ballX, ballY, ballR, ballTeta) {
@@ -144,8 +145,10 @@ function Game() {
 		var r = 1.5/100*gameW,
 			x = gameW/2,
 			y = gameH - gameH/100*5,
-			teta = Math.random()*4*pi/6 + pi/6,
-			speed = 10;
+			teta = Math.random()*4*pi/6 + pi/6;
+		
+		// To do: make speeds relative to canvas size
+		this.speed = 10;
 			
 		function draw() {
 			c.fillStyle = 'lightgrey';
@@ -163,9 +166,9 @@ function Game() {
 			
 		this.update = function() {
 			// Walls
-			if (x+r >= gameW || x-r <= 0) teta = teta <= pi ? pi - teta : 3*pi - teta;	// right-left
-			if (y-r <= 0) teta = 2*pi - teta;											// top
-			if (pad.collision(x, y, r, teta)) teta = pad.newTeta;						// pad
+			if (x+r >= gameW || x-r <= 0) teta = teta <= pi ? pi - teta : 3*pi - teta;	// Right and left walls
+			if (y-r <= 0) teta = 2*pi - teta;											// Top wall
+			if (pad.collision(x, y, r, teta)) teta = pad.newTeta;						// Pad
 			
 			// Bricks
 			for (var i=0, b; b = bricks[i]; i++) if (b.collision(x, y, r, teta)) {

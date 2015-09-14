@@ -9,7 +9,18 @@ function Game() {
 		gameH = _get('#container').getBoundingClientRect().height,
 		bricks = new Array,
 		t = 0,
+		pi = Math.PI,
 		animationID, pad, c;
+		
+	function fastLine(x1, y1, x2, y2, color, width) {
+		c.beginPath();
+		c.strokeStyle = color;
+		c.lineWidth = width;
+		c.moveTo(x1, y1);
+		c.lineTo(x2, y2);
+		c.closePath();
+		c.stroke();
+	}
 	
 	function Brick(x, y, w, h, color, lives) {	
 		var borderW = w/15;
@@ -38,44 +49,96 @@ function Game() {
 	}
 	
 	function Pad() {
-		var w = 14/100*gameW,
+		var r = 7/100*gameW,
 			h = 1/100*gameH,
-			x1 = gameW/2-w/2,
-			x2 = gameW/2+w/2,
+			x = gameW/2,
 			y = gameH-h;
+	
+		function draw() {
+			c.fillStyle = 'white';
+			c.fillRect(x-r, y, 2*r, h);
 			
+			// DEBUG
+			fastLine(x, y, x, 0, 'white', 2);
+		}
+
 		this.direction = false;
 		this.speed = 10;
+		this.newTeta = 0;
+		
+		this.collision = function(ballX, ballY, ballR, ballTeta) {
+			var dX = ballX - x;
+
+			// DEBUG
+			c.fillText('ballTeta = ' + ballTeta/pi*180, 50, gameH - 200); 
+			c.fillStyle = 'red';
+			c.fillRect(x, y, dX, h);
+			fastLine(ballX, ballY, ballX + 1000*Math.cos(-ballTeta), ballY + 1000*Math.sin(-ballTeta), 'pink', 2);
+			
+			if (Math.abs(dX) <= r && ballY+ballR >= y) {
+				
+				this.newTeta = 2*pi - ballTeta;
+				return true;
+			}
+			return false;
+		}
 		
 		this.update = function() {
 			if (this.direction === 'left') {
-				x1 -= this.speed;
-				x2 -= this.speed;
+				x -= this.speed;
 				
-				if (x1 < 0) {
+				if (x-r < 0) {
 					this.direction = false;
-					x1 = 0;
-					x2= w;
+					x = r;
 				}
 			}
 			
 			if (this.direction === 'right') {
-				x1 += this.speed;
-				x2 += this.speed;
+				x += this.speed;
 				
-				if (x2 > gameW) {
+				if (x+r > gameW) {
 					this.direction = false;
-					x2 = gameW;
-					x1 = x2-w;
+					x = gameW-r;
 				}
 			}
 			
-			c.fillStyle = 'white';
-			c.fillRect(x1, y, w, h);
+			draw();
 		}
 		
-		c.fillStyle = 'white';
-		c.fillRect(x1, y, w, h);
+		draw();
+	}
+	
+	function Ball() {
+		var r = 1.5/100*gameW,
+			x = gameW/2,
+			y = gameH - gameH/100*5,
+			teta = Math.random()*4*pi/6 + pi/6,
+			speed = 10;
+			
+		console.log(teta/Math.PI*360);
+			
+		function draw() {
+			c.fillStyle = 'lightgrey';
+			c.beginPath();
+			c.arc(x, y, r, 0, pi*2);
+			c.closePath();
+			c.fill();
+		}
+			
+		this.update = function() {
+			// Walls
+			if (x+r >= gameW) teta = teta <= pi ? pi - teta : 3*pi - teta;	// right
+			if (x-r <= 0) teta = teta <= pi ? pi - teta : 3*pi - teta;		// left
+			if (y-r <= 0) teta = 2*pi - teta;								// top
+			if (pad.collision(x, y, r, teta)) teta = pad.newTeta;			// pad
+			
+			x += speed*Math.cos(teta);
+			y -= speed*Math.sin(teta);
+			
+			draw();
+		}
+
+		draw();
 	}
 	
 	function spawnBricks(rows, columns, height) {
@@ -99,7 +162,9 @@ function Game() {
 		c.clearRect(0, 0, gameW, gameH);
 		for (var i=0, b; b = bricks[i]; i++) b.draw();
 		pad.update();
+		ball.update();
 		
+		t++;
 		animationID = requestAnimationFrame(update);
 	}
 	
@@ -109,6 +174,7 @@ function Game() {
 	
 		spawnBricks(10, 10, 5);
 		pad = new Pad();
+		ball = new Ball();
 		
 		document.addEventListener('keydown', function(e) {
 			if (e.keyCode === 37) pad.direction = 'left';

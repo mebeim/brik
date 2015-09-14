@@ -6,26 +6,33 @@ function _get(q) {
 Object.defineProperties(Number.prototype, {
 	'between': {
 		value: function(a, b) {
-			if (this >= a && this <= b) return true;
+			if (this > a && this < b) return true;
 			return false;
 		}
 	},
 	
 	'outside': {
 		value: function(a, b) {
-			if (this <= a || this >= b) return true;
+			if (this < a || this > b) return true;
 			return false;
 		}
 	}
 });
 
 function Game() {
-	var CANVAS = _get('#game-canvas'),
-		gameW = _get('#container').getBoundingClientRect().width,
-		gameH = _get('#container').getBoundingClientRect().height,
-		bricks = new Array,
-		t = 0,
-		pi = Math.PI,
+	var CANVAS		= _get('#game-canvas'),
+		gameW		= _get('#container').getBoundingClientRect().width,
+		gameH		= _get('#container').getBoundingClientRect().height,
+		bricks		= new Array,
+		pi			= Math.PI,
+		colors = {
+			red			: ['hsl(0, 100%, 15%)',			'hsl(0, 100%, 30%)',		'hsl(0, 100%, 50%)'		],
+			yellow		: [/*'hsl(51, 100%, 15%)',*/	'hsl(51, 100%, 30%)',		'hsl(51, 100%, 50%)'	],
+			green		: [/*'hsl(120, 100%, 10%)',		'hsl(120, 100%, 15%)',*/	'hsl(120, 100%, 25%)'	],
+			dark_red	: ['hsl(0, 100%, 10%)',			'hsl(0, 100%, 20%)',		'hsl(0, 100%, 35%)'		],
+			dark_yellow : [/*'hsl(47, 100%, 10%)',*/	'hsl(47, 100%, 20%)',		'hsl(47, 100%, 35%)'	],
+			dark_green	: [/*'hsl(120, 100%, 5%)',		'hsl(120, 100%, 10%)',*/	'hsl(120, 100%, 15%)'	],
+		},
 		animationID, pad, c;
 		
 	function fastLine(x1, y1, x2, y2, color, width) {
@@ -38,19 +45,19 @@ function Game() {
 		c.stroke();
 	}
 	
-	function Brick(x, y, w, h, color, lives) {	
+	function Brick(x, y, w, h, color, health) {	
 		var borderW = w/15,
-			x2 = x+w, y2 = y+h;
+			x2 = x+w,
+			y2 = y+h;
+			
 			
 		this.dead = false;
 		this.newTeta = 0;
 		
 		this.draw = function() {
-			c.fillStyle = color;
+			c.fillStyle = colors[color][health-1];
 			c.lineWidth = borderW;
-			if (color === 'red') c.strokeStyle = '#B70000';
-			if (color === 'gold') c.strokeStyle = '#A28000';
-			if (color === 'green') c.strokeStyle = '#004200';
+			c.strokeStyle = colors['dark_' + color][health-1];
 			
 			c.fillRect(x, y, w, h);
 			c.strokeRect(x+borderW/2, y+borderW/2, w-borderW, h-borderW);
@@ -65,18 +72,24 @@ function Game() {
 				collided = false;
 			
 			if (distX > w/2+ballR || distY > h/2+ballR) return collided;
-			else if (distX <= w/2 || distY <= h/2 || dX*dX + dY*dY <= ballR*ballR) collided = true;
+			else if (distX <= w/2 || distY <= h/2 /*|| dX*dX + dY*dY <= ballR*ballR*/) collided = true;
 			
 			if (collided) {
-				// vertical borders
-				if (ballX.between(x-ballR, x2+ballR) && ballY.between(y, y2)) this.newTeta = ballTeta <= pi ? pi - ballTeta : 3*pi - ballTeta;
-				// horizontal borders
-				else if (ballY.between(y-ballR, y2+ballR) && ballX.between(x, x2)) this.newTeta =  2*pi - ballTeta;
 				
-				else this.newTeta = ballTeta;
+				/* vertexes
+				if (dX*dX + dY*dY <= ballR*ballR)
+					this.newTeta = ballTeta;
+				*/
+				
+				// vertical borders
+				if (ballX.between(x-ballR, x2+ballR) && ballY.between(y, y2))
+					this.newTeta = ballTeta <= pi ? pi - ballTeta : 3*pi - ballTeta;
+				// horizontal borders
+				else if (ballY.between(y-ballR, y2+ballR) && ballX.between(x, x2))
+					this.newTeta =  2*pi - ballTeta;
 			}
 			
-			if (collided && --lives === 0) this.dead = true;
+			if (collided && --health === 0) this.dead = true;
 			return collided;
 		}
 	}
@@ -102,10 +115,6 @@ function Game() {
 		
 		this.collision = function(ballX, ballY, ballR, ballTeta) {
 			var dX = ballX - x;
-
-			// DEBUG
-			c.fillText('ballTeta = ' + ballTeta/pi*180, 50, gameH - 200); 
-			fastLine(ballX, ballY, ballX + 1000*Math.cos(-ballTeta), ballY + 1000*Math.sin(-ballTeta), 'pink', 2);
 			
 			if (!(Math.abs(dX) <= r || ballY+ballR >= y)) hitbox = false;
 			
@@ -164,6 +173,8 @@ function Game() {
 			// DEBUG
 			fastLine(x, 0, x, gameH, 'lightgrey', 2);
 			fastLine(0, y, gameW, y, 'lightgrey', 2);
+			c.fillText('ballTeta = ' + teta/pi*180, 50, gameH - 200); 
+			fastLine(x, y, x + 1000*Math.cos(-teta), y + 1000*Math.sin(-teta), 'pink', 2);
 		}
 			
 		this.update = function() {
@@ -191,13 +202,14 @@ function Game() {
 		var width = gameW/columns,
 			height = height/100*gameH,
 			color = 'red',
+			health = 3,
 			b;
 		
 		for (var i=0; i < rows; i++) {
 			for (var j=0; j < columns; j++) {
-				if (i > 1) color = 'gold';
-				if (i > 4) color = 'green';
-				b = new Brick(j*width, i*height, width, height, color, 1);
+				if (i > 1) { color = 'yellow'; health = 2; }
+				if (i > 4) { color = 'green'; health = 1; }
+				b = new Brick(j*width, i*height, width, height, color, health);
 				b.draw();
 				bricks.push(b);
 			}
@@ -206,12 +218,11 @@ function Game() {
 	
 	function update() {
 		c.clearRect(0, 0, gameW, gameH);
-		for (var i=0, b; b = bricks[i]; i++) b.draw();
 		
+		for (var i=0, b; b = bricks[i]; i++) b.draw();
 		pad.update();
 		ball.update();
 		
-		t++;
 		animationID = requestAnimationFrame(update);
 	}
 	

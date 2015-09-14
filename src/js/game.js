@@ -6,14 +6,14 @@ function _get(q) {
 Object.defineProperties(Number.prototype, {
 	'between': {
 		value: function(a, b) {
-			if (this > a && this < b) return true;
+			if (this >= a && this <= b) return true;
 			return false;
 		}
 	},
 	
 	'outside': {
 		value: function(a, b) {
-			if (this < a || this > b) return true;
+			if (this <= a || this >= b) return true;
 			return false;
 		}
 	}
@@ -67,30 +67,23 @@ function Game() {
 			// returns true if the brick gets hit by the ball
 			var distX = Math.abs(ballX - x - w/2),
 				distY = Math.abs(ballY - y - h/2),
-				dX = distX - w/2,
-				dY = distY - h/2,
-				collided = false;
+				dX2 = Math.pow(distX - w/2, 2),
+				dY2 = Math.pow(distY - h/2, 2);
 			
-			if (distX > w/2+ballR || distY > h/2+ballR) return collided;
-			else if (distX <= w/2 || distY <= h/2 /*|| dX*dX + dY*dY <= ballR*ballR*/) collided = true;
-			
-			if (collided) {
+			if (distX <= w/2+ballR && distY <= h/2+ballR) {
+				void(0);
 				
-				/* vertexes
-				if (dX*dX + dY*dY <= ballR*ballR)
-					this.newTeta = ballTeta;
-				*/
-				
-				// vertical borders
-				if (ballX.between(x-ballR, x2+ballR) && ballY.between(y, y2))
+				if (ballX.between(x-ballR, x2+ballR) && ballY.between(y, y2))		// vertical borders
 					this.newTeta = ballTeta <= pi ? pi - ballTeta : 3*pi - ballTeta;
-				// horizontal borders
-				else if (ballY.between(y-ballR, y2+ballR) && ballX.between(x, x2))
+				else if (ballY.between(y-ballR, y2+ballR) && ballX.between(x, x2))	// horizontal borders
 					this.newTeta =  2*pi - ballTeta;
-			}
-			
-			if (collided && --health === 0) this.dead = true;
-			return collided;
+				else if (dX2 + dY2 <= ballR*ballR)									// vertexes
+					this.newTeta = -ballTeta - pi + 2*Math.atan((y-y2)/(x-x2));
+				else this.newTeta = ballTeta;
+				
+				if (--health === 0) this.dead = true;
+				return true;
+			} else return false;
 		}
 	}
 	
@@ -98,8 +91,7 @@ function Game() {
 		var r = 7/100*gameW,
 			h = 1/100*gameH,
 			x = gameW/2,
-			y = gameH-h,
-			hitbox = false; // hitbox prevents the ball from hitting the pad more than once
+			y = gameH-h; // hitbox prevents the ball from hitting the pad more than once
 	
 		function draw() {
 			c.fillStyle = 'white';
@@ -116,16 +108,8 @@ function Game() {
 		this.collision = function(ballX, ballY, ballR, ballTeta) {
 			var dX = ballX - x;
 			
-			if (!(Math.abs(dX) <= r || ballY+ballR >= y)) hitbox = false;
-			
-			if (!hitbox && Math.abs(dX) <= r && ballY+ballR >= y) {
-				hitbox = true;
-				this.newTeta = 2*pi - ballTeta;
-				
-				// deviation of the ball 
-				if (dX > r/5) this.newTeta -= (this.newTeta-pi/36)*dX/r;
-				else if (dX < r/5) this.newTeta -= (pi-this.newTeta-pi/36)*dX/r
-				
+			if (Math.abs(dX) <= r && ballY+ballR >= y && ballTeta.between(pi, 2*pi)) {
+				this.newTeta = pi/2 - dX*(pi/3)/r;
 				return true;
 			}
 			return false;

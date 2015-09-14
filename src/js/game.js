@@ -68,7 +68,12 @@ function Game() {
 			else if (distX <= w/2 || distY <= h/2 || dX*dX + dY*dY <= ballR*ballR) collided = true;
 			
 			if (collided) {
-				this.newTeta = ballTeta;
+				// vertical borders
+				if (ballX.between(x-ballR, x2+ballR) && ballY.between(y, y2)) this.newTeta = ballTeta <= pi ? pi - ballTeta : 3*pi - ballTeta;
+				// horizontal borders
+				else if (ballY.between(y-ballR, y2+ballR) && ballX.between(x, x2)) this.newTeta =  2*pi - ballTeta;
+				
+				else this.newTeta = ballTeta;
 			}
 			
 			if (collided && --lives === 0) this.dead = true;
@@ -147,7 +152,7 @@ function Game() {
 			x = gameW/2,
 			y = gameH - gameH/100*5,
 			teta = Math.random()*4*pi/6 + pi/6,
-			speed = 8;
+			speed = 10;
 			
 		function draw() {
 			c.fillStyle = 'lightgrey';

@@ -74,7 +74,7 @@ function Game() {
 			c.fillRect(x, y, w, h);
 			c.strokeRect(x+borderW/2, y+borderW/2, w-borderW, h-borderW);
 			
-			// DEBUG 
+			/* DEBUG 
 			// Ball hitbox on the brick (to be done with only 1 brick)
 			var dX, dY, R = 1.5/100*gameW;
 			for (var i=x-R; i<x2+R; i++) {
@@ -91,7 +91,7 @@ function Game() {
 						c.fillRect(i, j, 1, 1);
 					}					
 				}
-			} 
+			} */
 		}
 		
 		this.collision = function(ballX, ballY, ballR, ballTeta) {
@@ -202,11 +202,11 @@ function Game() {
 			
 			/* DEBUG
 			c.fastLine(x, 0, x, gameH, 'lightgrey', 2);
-			c.fastLine(0, y, gameW, y, 'lightgrey', 2);*/
+			c.fastLine(0, y, gameW, y, 'lightgrey', 2);
 			c.fillText('## DEBUG MODE ##', 50, gameH - 200);
 			c.fillText('θ = ' + (teta/pi*180).toFixed(3) + '°', 50, gameH - 180);
 			c.fillText('m = ' + Math.tan(teta).toFixed(3), 50, gameH - 170);
-			c.fastLine(x, y, x + 1000*Math.cos(-teta), y + 1000*Math.sin(-teta), 'pink', 2);
+			c.fastLine(x, y, x + 1000*Math.cos(-teta), y + 1000*Math.sin(-teta), 'pink', 2); */
 		}
 			
 		this.update = function() {
@@ -238,7 +238,6 @@ function Game() {
 			health = 3,
 			b;
 		
-		/*
 		for (var i=0; i < rows; i++) {
 			for (var j=0; j < columns; j++) {
 				if (i > 1) { color = 'yellow'; health = 2; }
@@ -248,13 +247,12 @@ function Game() {
 				bricks.push(b);
 			}
 		}
-		*/
 		
-		// DEBUG
+		/* DEBUG
 		// Spawn only one red brick
 		b = new Brick(4*width, 7*height, width, height, 'red', 3);
 		b.draw();
-		bricks.push(b);
+		bricks.push(b); */
 	}
 	
 	function update() {

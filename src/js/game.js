@@ -125,9 +125,8 @@ function Game() {
 					// Find which vertex is involved
 					vX = Math.abs(x-ballX) < Math.abs(x2-ballX) ? x : x2;
 					vY = Math.abs(y-ballY) < Math.abs(y2-ballY) ? y : y2;
-					
-					// To do: this still generates negative angles
-					this.newTeta = 2*Math.atanP((vY-ballY)/(vX-ballX)) - ballTeta - pi;
+					// Reflect the ball (-deltaY/deltaX because canvas has inverted Y axis)
+					this.newTeta = 2*Math.atanP(-(vY-ballY)/(vX-ballX)) - ballTeta - pi;
 				}
 				
 				if (--health === 0) this.dead = true;
@@ -222,8 +221,9 @@ function Game() {
 				if (b.dead) bricks.splice(i--, 1);
 			}
 			
-			x += this.speed*Math.cos(teta);
+			canvas has inverted Y axis
 			y -= this.speed*Math.sin(teta);
+			x += this.speed*Math.cos(teta);
 			
 			draw();
 		}

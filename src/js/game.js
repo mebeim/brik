@@ -260,9 +260,9 @@ function Game() {
 	function update() {
 		c.clearRect(0, 0, gameW, gameH);
 		
+		for (var i=0, b; b = bricks[i]; i++) b.draw();
 		pad.update();
 		ball.update();
-		for (var i=0, b; b = bricks[i]; i++) b.draw();
 		
 		animationID = requestAnimationFrame(update);
 	}

@@ -14,6 +14,14 @@ Object.defineProperties(Number.prototype, {
 	}
 });
 
+Object.defineProperties(Math, {
+	'atanP' : {
+		value: function(m) {
+			return (m < 0 ? this.PI : 0) + this.atan(m);
+		}
+	}
+});
+
 function _get(q) {
 	if (q[0] === '*') return document.querySelectorAll(q.substr(1)); 
 	else return document.querySelector(q);
@@ -63,23 +71,31 @@ function Game() {
 			c.strokeRect(x+borderW/2, y+borderW/2, w-borderW, h-borderW);
 		}
 		
-		this.collision = function(ballX, ballY, ballR, ballTeta) {
-			var distX = Math.abs(ballX - x - w/2),
-				distY = Math.abs(ballY - y - h/2),
-				dX2 = Math.pow(distX - w/2, 2),
-				dY2 = Math.pow(distY - h/2, 2);
+		this.collision = function(ballX, ballY, R, ballTeta) {
+			var dX = Math.abs(ballX - x - w/2) - w/2,
+				dY = Math.abs(ballY - y - w/2) - h/2,
+				dX2 = dX*dX,
+				dY2 = dY*dY,
+				R2 = R*R,
+				vX, vY;
+				
+			vX = Math.abs(x-ballX) < Math.abs(x2-ballX) ? x : x2;
+			vY = Math.abs(y-ballY) < Math.abs(y2-ballY) ? y : y2;
+			fastLine(vX, vY, ballX, ballY, 'black', 2);
 			
-			if (distX <= w/2+ballR && distY <= h/2+ballR) {
+			if (dX <= R && dY <= R) {
 				void(0);
 				
-				if (ballX.between(x-ballR, x2+ballR) && ballY.between(y, y2))		// Vertical borders
+				if (dX <= R /*ballX.between(x-ballR, x2+ballR) && ballY.between(y, y2)*/)			// Vertical borders
 					this.newTeta = ballTeta <= pi ? pi - ballTeta : 3*pi - ballTeta;
-				else if (ballY.between(y-ballR, y2+ballR) && ballX.between(x, x2))	// Horizontal borders
+				else if (dY <= R /*ballY.between(y-ballR, y2+ballR) && ballX.between(x, x2)*/)	// Horizontal borders
 					this.newTeta =  2*pi - ballTeta;
-				else if (dX2 + dY2 <= ballR*ballR)									// Vertexes
-					// To fix: this is wrong, find a decent equation
-					this.newTeta = -ballTeta - pi + 2*Math.atan((y-y2)/(x-x2));
-				else this.newTeta = ballTeta;
+				else if (dX2 + dY2 <= R2) {															// Vertexes
+					// Find which vertex is involved
+					
+					// Reflect
+					this.newTeta = 2*Math.atanP((vY-ballY)/(vX-ballX)) - ballTeta - pi;
+				}
 				
 				if (--health === 0) this.dead = true;
 				return true;
@@ -157,9 +173,9 @@ function Game() {
 			c.closePath();
 			c.fill();
 			
-			// DEBUG
+			/* DEBUG
 			fastLine(x, 0, x, gameH, 'lightgrey', 2);
-			fastLine(0, y, gameW, y, 'lightgrey', 2);
+			fastLine(0, y, gameW, y, 'lightgrey', 2);*/
 			c.fillText('ballTeta = ' + teta/pi*180, 50, gameH - 200); 
 			fastLine(x, y, x + 1000*Math.cos(-teta), y + 1000*Math.sin(-teta), 'pink', 2);
 		}
@@ -176,8 +192,8 @@ function Game() {
 				if (b.dead) bricks.splice(i--, 1);
 			}
 			
-			x += speed*Math.cos(teta);
-			y -= speed*Math.sin(teta);
+			x += this.speed*Math.cos(teta);
+			y -= this.speed*Math.sin(teta);
 			
 			draw();
 		}
@@ -192,6 +208,7 @@ function Game() {
 			health = 3,
 			b;
 		
+		/*
 		for (var i=0; i < rows; i++) {
 			for (var j=0; j < columns; j++) {
 				if (i > 1) { color = 'yellow'; health = 2; }
@@ -201,6 +218,12 @@ function Game() {
 				bricks.push(b);
 			}
 		}
+		*/
+		
+		// Only one brick:
+		b = new Brick(3*width, 4*height, width, height, 'red', 3);
+		b.draw();
+		bricks.push(b);
 	}
 	
 	function update() {

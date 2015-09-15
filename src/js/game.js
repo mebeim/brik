@@ -1,23 +1,45 @@
-function _get(q) {
-	if (q[0] === '*') return document.querySelectorAll(q.substr(1)); 
-	else return document.querySelector(q);
-}
-
 Object.defineProperties(Number.prototype, {
-	'between': {
+	between: {
 		value: function(a, b) {
-			if (this > a && this < b) return true;
+			if (this >= a && this <= b) return true;
 			return false;
 		}
 	},
 	
-	'outside': {
+	outside: {
 		value: function(a, b) {
-			if (this < a || this > b) return true;
+			if (this <= a || this >= b) return true;
 			return false;
 		}
 	}
 });
+
+Object.defineProperties(Math, {
+	atanP : {
+		value: function(m) {
+			return (m < 0 ? this.PI : 0) + this.atan(m);
+		}
+	}
+});
+
+Object.defineProperties(CanvasRenderingContext2D.prototype, {
+	fastLine: {
+		value: function(x1, y1, x2, y2, color, width) {
+			this.beginPath();
+			if (color) this.strokeStyle = color;
+			if (width) this.lineWidth = width;
+			this.moveTo(x1, y1);
+			this.lineTo(x2, y2);
+			this.closePath();
+			this.stroke();
+		}
+	}
+});
+
+function _get(q) {
+	if (q[0] === '*') return document.querySelectorAll(q.substr(1)); 
+	else return document.querySelector(q);
+}
 
 function Game() {
 	var CANVAS		= _get('#game-canvas'),
@@ -34,16 +56,6 @@ function Game() {
 			dark_green	: [/*'hsl(120, 100%, 5%)',		'hsl(120, 100%, 10%)',*/	'hsl(120, 100%, 15%)'	],
 		},
 		animationID, pad, c;
-		
-	function fastLine(x1, y1, x2, y2, color, width) {
-		c.beginPath();
-		c.strokeStyle = color;
-		c.lineWidth = width;
-		c.moveTo(x1, y1);
-		c.lineTo(x2, y2);
-		c.closePath();
-		c.stroke();
-	}
 	
 	function Brick(x, y, w, h, color, health) {	
 		var borderW = w/15,
@@ -61,71 +73,89 @@ function Game() {
 			
 			c.fillRect(x, y, w, h);
 			c.strokeRect(x+borderW/2, y+borderW/2, w-borderW, h-borderW);
+			
+			// DEBUG 
+			// Ball hitbox on the brick (to be done with only 1 brick)
+			var dX, dY, R = 1.5/100*gameW;
+			for (var i=x-R; i<x2+R; i++) {
+				for (var j=y-R; j<y2+R; j++) {
+					dX = Math.abs(i - x - w/2) - w/2;
+					dY = Math.abs(j - y - h/2) - h/2;
+					
+					dX = dX >= 0 ? dX : 0;
+					dY = dY >= 0 ? dY : 0;
+					
+					if (dX*dX + dY*dY <= R*R && (dX || dY)) { 
+						if (dX && dY) c.fillStyle = 'rgba(0, 0, 0, 1)';
+						else c.fillStyle = 'rgba(0, 0, 0, 0.5)';
+						c.fillRect(i, j, 1, 1);
+					}					
+				}
+			} 
 		}
 		
 		this.collision = function(ballX, ballY, ballR, ballTeta) {
-			// returns true if the brick gets hit by the ball
-			var distX = Math.abs(ballX - x - w/2),
-				distY = Math.abs(ballY - y - h/2),
-				dX = distX - w/2,
-				dY = distY - h/2,
-				collided = false;
 			
-			if (distX > w/2+ballR || distY > h/2+ballR) return collided;
-			else if (distX <= w/2 || distY <= h/2 /*|| dX*dX + dY*dY <= ballR*ballR*/) collided = true;
+			/*
+			 * This function returns true if the ball hits the brick, false otherwise.
+			 * It also decreases the brick's health until 0, when the brick dies.
+			 *
+			 * this.newTeta: new angle of the ball after the collision
+			 * dX: distance from the center of the ball and the nearest vertical border
+			 * dY: distance from the center of the ball and the nearest horizontal border
+			 * vX: x of the nearest vertex
+			 * vY: y of the nearest vertex
+			 *
+			 */
 			
-			if (collided) {
+			var dX = Math.abs(ballX - x - w/2) - w/2,
+				dY = Math.abs(ballY - y - h/2) - h/2,
+				R2 = ballR*ballR,
+				vX, vY, dX2, dY2;
 				
-				/* vertexes
-				if (dX*dX + dY*dY <= ballR*ballR)
-					this.newTeta = ballTeta;
-				*/
-				
-				// vertical borders
-				if (ballX.between(x-ballR, x2+ballR) && ballY.between(y, y2))
-					this.newTeta = ballTeta <= pi ? pi - ballTeta : 3*pi - ballTeta;
-				// horizontal borders
-				else if (ballY.between(y-ballR, y2+ballR) && ballX.between(x, x2))
-					this.newTeta =  2*pi - ballTeta;
-			}
+			dX2 = (dX < 0) ? 0 : dX*dX;
+			dY2 = (dY < 0) ? 0 : dY*dY;
 			
-			if (collided && --health === 0) this.dead = true;
-			return collided;
+			// If collision
+			if (dX2 + dY2 <= R2) {				
+				// Check collision for vertical borders, horizontal borders and vertexes
+				if (!dY2) this.newTeta = ballTeta <= pi ? pi - ballTeta : 3*pi - ballTeta;
+				else if (!dX2) this.newTeta =  2*pi - ballTeta;		
+				else {
+					// Find which vertex is involved
+					vX = Math.abs(x-ballX) < Math.abs(x2-ballX) ? x : x2;
+					vY = Math.abs(y-ballY) < Math.abs(y2-ballY) ? y : y2;
+					
+					// To do: this still generates negative angles
+					this.newTeta = 2*Math.atanP((vY-ballY)/(vX-ballX)) - ballTeta - pi;
+				}
+				
+				if (--health === 0) this.dead = true;
+				return true;
+			} else return false;
 		}
 	}
 	
 	function Pad() {
-		var r = 7/100*gameW,
-			h = 1/100*gameH,
+		var r = 7e-2*gameW,
+			h = 1e-2*gameH,
 			x = gameW/2,
-			y = gameH-h,
-			hitbox = false; // hitbox prevents the ball from hitting the pad more than once
+			y = gameH-h;
 	
 		function draw() {
 			c.fillStyle = 'white';
 			c.fillRect(x-r, y, 2*r, h);
-			
-			// DEBUG
-			fastLine(x, y, x, 0, 'white', 2);
 		}
 
+		this.speed = 1.5e-2*gameH;
 		this.direction = false;
-		this.speed = 15;
 		this.newTeta = 0;
 		
 		this.collision = function(ballX, ballY, ballR, ballTeta) {
 			var dX = ballX - x;
 			
-			if (!(Math.abs(dX) <= r || ballY+ballR >= y)) hitbox = false;
-			
-			if (!hitbox && Math.abs(dX) <= r && ballY+ballR >= y) {
-				hitbox = true;
-				this.newTeta = 2*pi - ballTeta;
-				
-				// deviation of the ball 
-				if (dX > r/5) this.newTeta -= (this.newTeta-pi/36)*dX/r;
-				else if (dX < r/5) this.newTeta -= (pi-this.newTeta-pi/36)*dX/r
-				
+			if (Math.abs(dX) <= r && ballY+ballR >= y && ballTeta.between(pi, 2*pi)) {
+				this.newTeta = pi/2 - dX*(pi/3)/r;
 				return true;
 			}
 			return false;
@@ -157,11 +187,12 @@ function Game() {
 	}
 	
 	function Ball() {
-		var r = 1.5/100*gameW,
+		var r = 1.5e-2*gameW,
 			x = gameW/2,
 			y = gameH - gameH/100*5,
-			teta = Math.random()*4*pi/6 + pi/6,
-			speed = 10;
+			teta = Math.random()*4*pi/6 + pi/6;
+
+		this.speed = 1e-2*gameH;
 			
 		function draw() {
 			c.fillStyle = 'lightgrey';
@@ -170,18 +201,20 @@ function Game() {
 			c.closePath();
 			c.fill();
 			
-			// DEBUG
-			fastLine(x, 0, x, gameH, 'lightgrey', 2);
-			fastLine(0, y, gameW, y, 'lightgrey', 2);
-			c.fillText('ballTeta = ' + teta/pi*180, 50, gameH - 200); 
-			fastLine(x, y, x + 1000*Math.cos(-teta), y + 1000*Math.sin(-teta), 'pink', 2);
+			/* DEBUG
+			c.fastLine(x, 0, x, gameH, 'lightgrey', 2);
+			c.fastLine(0, y, gameW, y, 'lightgrey', 2);*/
+			c.fillText('## DEBUG MODE ##', 50, gameH - 200);
+			c.fillText('θ = ' + (teta/pi*180).toFixed(3) + '°', 50, gameH - 180);
+			c.fillText('m = ' + Math.tan(teta).toFixed(3), 50, gameH - 170);
+			c.fastLine(x, y, x + 1000*Math.cos(-teta), y + 1000*Math.sin(-teta), 'pink', 2);
 		}
 			
 		this.update = function() {
 			// Walls
-			if (x+r >= gameW || x-r <= 0) teta = teta <= pi ? pi - teta : 3*pi - teta;	// right-left
-			if (y-r <= 0) teta = 2*pi - teta;											// top
-			if (pad.collision(x, y, r, teta)) teta = pad.newTeta;						// pad
+			if (x+r >= gameW || x-r <= 0) teta = teta <= pi ? pi - teta : 3*pi - teta;	// Right and left walls
+			if (y-r <= 0) teta = 2*pi - teta;											// Top wall
+			if (pad.collision(x, y, r, teta)) teta = pad.newTeta;						// Pad
 			
 			// Bricks
 			for (var i=0, b; b = bricks[i]; i++) if (b.collision(x, y, r, teta)) {
@@ -189,8 +222,8 @@ function Game() {
 				if (b.dead) bricks.splice(i--, 1);
 			}
 			
-			x += speed*Math.cos(teta);
-			y -= speed*Math.sin(teta);
+			x += this.speed*Math.cos(teta);
+			y -= this.speed*Math.sin(teta);
 			
 			draw();
 		}
@@ -205,6 +238,7 @@ function Game() {
 			health = 3,
 			b;
 		
+		/*
 		for (var i=0; i < rows; i++) {
 			for (var j=0; j < columns; j++) {
 				if (i > 1) { color = 'yellow'; health = 2; }
@@ -214,6 +248,13 @@ function Game() {
 				bricks.push(b);
 			}
 		}
+		*/
+		
+		// DEBUG
+		// Spawn only one red brick
+		b = new Brick(4*width, 7*height, width, height, 'red', 3);
+		b.draw();
+		bricks.push(b);
 	}
 	
 	function update() {

@@ -14,10 +14,10 @@ Object.defineProperties(Number.prototype, {
 	}
 });
 
-Object.defineProperties(Math, {
-	atanP : {
-		value: function(m) {
-			return (m < 0 ? this.PI : 0) + this.atan(m);
+Object.defineProperties(Math, {	
+	normAngle: {
+		value: function(a) {
+			return (a < 0 ? 2*this.PI : 0) + a%(2*this.PI);
 		}
 	}
 });
@@ -126,7 +126,7 @@ function Game() {
 					vX = Math.abs(x-ballX) < Math.abs(x2-ballX) ? x : x2;
 					vY = Math.abs(y-ballY) < Math.abs(y2-ballY) ? y : y2;
 					// Reflect the ball (-deltaY/deltaX because canvases have inverted Y axis)
-					this.newTeta = 2*Math.atanP(-(vY-ballY)/(vX-ballX)) - ballTeta - pi;
+					this.newTeta = Math.normAngle(2*Math.atan(-(vY-ballY)/(vX-ballX)) - ballTeta - pi);
 				}
 				
 				if (--health === 0) this.dead = true;

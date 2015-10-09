@@ -17,7 +17,7 @@ Object.defineProperties(Number.prototype, {
 		value: function(a, b) {
 			if (this <= a) return a;
 			if (this >= b) return b;
-			return this;
+			return this.valueOf();
 		}
 	}
 });
@@ -63,7 +63,7 @@ function Game() {
 			dark_yellow : [/*'hsl(47, 100%, 10%)',*/	'hsl(47, 100%, 20%)',		'hsl(47, 100%, 35%)'	],
 			dark_green	: [/*'hsl(120, 100%, 5%)',		'hsl(120, 100%, 10%)',*/	'hsl(120, 100%, 15%)'	],
 		},
-		animationID, pad, c;
+		animationID, pad, c, Ytreshold;
 	
 	function Brick(x, y, w, h, color, health, position) {	
 		var borderW = w/15,
@@ -161,6 +161,8 @@ function Game() {
 			h = 1e-2*gameH,
 			x = gameW/2,
 			y = gameH-h;
+			
+		this.height = h;
 	
 		function draw() {
 			c.fillStyle = 'white';
@@ -206,13 +208,15 @@ function Game() {
 		draw();
 	}
 	
-	function Ball() {
-		var r = 1.5e-2*gameW,
-			x = gameW/2,
-			y = gameH - gameH/100*5,
+	function Ball(initX, initY, r, speed) {
+		var x = initX,
+			y = initY,
 			teta = Math.random()*4*pi/6 + pi/6;
 
-		this.speed = 1e-2*gameH;
+		this.x = x;
+		this.y = y;
+		this.teta = teta;
+		this.speed = speed;
 			
 		function draw() {
 			c.fillStyle = 'lightgrey';
@@ -238,18 +242,21 @@ function Game() {
 			/* DEBUG	if (y+r >= gameH) teta = 2*pi - teta;							// Make pad unnecessary */
 			
 			// Bricks
-			for (var i=0; i < bricks.length; i++) {
-				for (var j=0, b; j < bricks[i].length; j++)
+			if (y <= Ytreshold) // start checking for collisions with bricks only when the ball is close to the lowest one
+			for (var j=bricks[0].length-1; j >= 0; j--) { // loop optimization: start from lower ones (bottom)
+				for (var i=bricks.length-1, b; i >= 0; i--) {
 					if (bricks[i][j] && bricks[i][j].collision(x, y, r, teta)) {
 						teta = bricks[i][j].newTeta;
 						if (bricks[i][j].dead) delete bricks[i][j];
 						break; // loop optimization
+					}
 				}
 			}
 			
 			// Canvases have inverted Y axis
-			y -= this.speed*Math.sin(teta);
-			x += this.speed*Math.cos(teta);
+			this.y = y = (y - this.speed*Math.sin(teta)).limitTo(0,gameH);
+			this.x = x = (x + this.speed*Math.cos(teta)).limitTo(0,gameW);
+			this.teta = teta;
 			
 			draw();
 		}
@@ -273,6 +280,7 @@ function Game() {
 				b.draw();
 				bricks[i].push(b);
 			}
+			if (i == rows-1) Ytreshold = (i+2)*height;
 		}
 		
 		/* DEBUG
@@ -298,7 +306,7 @@ function Game() {
 	
 		spawnBricks(10, 10, 5);
 		pad = new Pad();
-		ball = new Ball();
+		ball = new Ball(gameW/2, gameH-(pad.height+1.5e-2*gameW), 1.5e-2*gameW, 1e-2*gameH);	// x, y, radius, speed
 		
 		document.addEventListener('keydown', function(e) {
 			if (e.keyCode === 37) pad.direction = 'left';

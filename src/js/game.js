@@ -11,6 +11,14 @@ Object.defineProperties(Number.prototype, {
 			if (this <= a || this >= b) return true;
 			return false;
 		}
+	},
+	
+	limitTo: {
+		value: function(a, b) {
+			if (this <= a) return a;
+			if (this >= b) return b;
+			return this;
+		}
 	}
 });
 
@@ -130,10 +138,10 @@ function Game() {
 					vX = Math.abs(x-ballX) < Math.abs(x2-ballX) ? x : x2;
 					vY = Math.abs(y-ballY) < Math.abs(y2-ballY) ? y : y2;
 					
-					// Check the sibling before reflecting from the vertex
-					if (bricks[position.x + (vX == x ? -1 : 1)][posiiton.y]
-						|| bricks[position.x][position.y + (vY == y ? -1 : 1)]) {
-						// If there's a sibling the ball should be reflected using the border
+					// Check the siblings before reflecting from the vertex
+					if (bricks[(position.x + (vX == x ? -1 : 1 )).limitTo(0,bricks.length-1)][position.y]
+						|| bricks[position.x][(position.y + (vY == y ? -1 : 1)).limitTo(0,bricks[position.x].length-1)]) {
+						// If there's a sibling brick the ball should be reflected using the border
 						if (vX == x) this.newTeta =  2*pi - ballTeta;
 						else this.newTeta = ballTeta <= pi ? pi - ballTeta : 3*pi - ballTeta;
 					} else {					
@@ -213,13 +221,13 @@ function Game() {
 			c.closePath();
 			c.fill();
 			
-			/* DEBUG */
+			/* DEBUG
 			c.fastLine(x, 0, x, gameH, 'lightgrey', 2);
 			c.fastLine(0, y, gameW, y, 'lightgrey', 2);
 			c.fillText('## DEBUG MODE ##', 50, gameH - 200);
 			c.fillText('θ = ' + (teta/pi*180).toFixed(3) + '°', 50, gameH - 180);
 			c.fillText('m = ' + Math.tan(teta).toFixed(3), 50, gameH - 170);
-			c.fastLine(x, y, x + 1000*Math.cos(-teta), y + 1000*Math.sin(-teta), 'pink', 2);
+			c.fastLine(x, y, x + 1000*Math.cos(-teta), y + 1000*Math.sin(-teta), 'pink', 2); */
 		}
 			
 		this.update = function() {
@@ -227,12 +235,15 @@ function Game() {
 			if (x+r >= gameW || x-r <= 0) teta = teta <= pi ? pi - teta : 3*pi - teta;	// Right and left walls
 			if (y-r <= 0) teta = 2*pi - teta;											// Top wall
 			if (pad.collision(x, y, r, teta)) teta = pad.newTeta;						// Pad
+			/* DEBUG	if (y+r >= gameH) teta = 2*pi - teta;							// Make pad unnecessary */
 			
 			// Bricks
 			for (var i=0; i < bricks.length; i++) {
-				for (var j=0, b; b = bricks[i][j]; j++) if (b.collision(x, y, r, teta)) {
-					teta = b.newTeta;
-					if (b.dead) bricks[i, j] = false;
+				for (var j=0, b; j < bricks[i].length; j++)
+					if (bricks[i][j] && bricks[i][j].collision(x, y, r, teta)) {
+						teta = bricks[i][j].newTeta;
+						if (bricks[i][j].dead) delete bricks[i][j];
+						break; // loop optimization
 				}
 			}
 			
@@ -274,7 +285,7 @@ function Game() {
 	function update() {
 		c.clearRect(0, 0, gameW, gameH);
 		
-		for (var i=0; i < bricks.length; i++) for (var j=0, b; b = bricks[i][j]; j++) b.draw();
+		for (var i=0; i < bricks.length; i++) for (var j=0, b; j < bricks[i].length; j++) bricks[i][j] && bricks[i][j].draw();
 		pad.update();
 		ball.update();
 		

@@ -27,6 +27,11 @@ Object.defineProperties(Math, {
 		value: function(a) {
 			return (a < 0 ? 2*this.PI : 0) + a%(2*this.PI);
 		}
+	},
+	reflect: {
+		value: function(tg, teta) {
+			return this.normAngle(2*Math.atan(tg) - teta);
+		}
 	}
 });
 
@@ -145,8 +150,8 @@ function Game() {
 						if (vX == x) this.newTeta =  2*pi - ballTeta;
 						else this.newTeta = ballTeta <= pi ? pi - ballTeta : 3*pi - ballTeta;
 					} else {					
-						// Reflect the ball (-deltaY/deltaX because canvases have inverted Y axis)
-						this.newTeta = Math.normAngle(2*Math.atan(-(vY-ballY)/(vX-ballX)) - ballTeta - pi);
+						// Reflect the ball (-(-deltaX/deltaY) because canvases have inverted Y axis)
+						this.newTeta = Math.reflect((vX-ballX)/(vY-ballY), ballTeta);
 					}
 				}
 				
@@ -236,10 +241,10 @@ function Game() {
 			
 		this.update = function() {
 			// Walls
-			if (x+r >= gameW || x-r <= 0) teta = teta <= pi ? pi - teta : 3*pi - teta;	// Right and left walls
-			if (y-r <= 0) teta = 2*pi - teta;											// Top wall
-			if (pad.collision(x, y, r, teta)) teta = pad.newTeta;						// Pad
-			/* DEBUG	if (y+r >= gameH) teta = 2*pi - teta;							// Make pad unnecessary */
+			if (x+r >= gameW || x-r <= 0) teta = Math.reflect(Infinity, teta);		// Right and left walls
+			if (y-r <= 0) teta = Math.reflect(0, teta);								// Top wall
+			if (pad.collision(x, y, r, teta)) teta = pad.newTeta;					// Pad
+			/* DEBUG */	if (y+r >= gameH) teta = Math.reflect(0, teta);				// Make pad unnecessary */
 			
 			// Bricks
 			if (y <= Ytreshold) // start checking for collisions with bricks only when the ball is close to the lowest one
@@ -254,8 +259,8 @@ function Game() {
 			}
 			
 			// Canvases have inverted Y axis
-			this.y = y = (y - this.speed*Math.sin(teta)).limitTo(0,gameH);
-			this.x = x = (x + this.speed*Math.cos(teta)).limitTo(0,gameW);
+			this.y = y = (y - this.speed*Math.sin(teta)).limitTo(r,gameH-r);
+			this.x = x = (x + this.speed*Math.cos(teta)).limitTo(r,gameW-r);
 			this.teta = teta;
 			
 			draw();

@@ -81,7 +81,7 @@ function Game() {
 		this.x2 = x2;
 		this.y2 = y2;
 		this.dead = false;
-		this.newTeta = 0;
+		this.tan = 0;
 		
 		this.draw = function() {
 			c.fillStyle = colors[color][health-1];
@@ -136,22 +136,23 @@ function Game() {
 			// If collision
 			if (dX2 + dY2 <= R2) {				
 				// Check collision for vertical borders, horizontal borders and vertexes
-				if (!dY2) this.newTeta = ballTeta <= pi ? pi - ballTeta : 3*pi - ballTeta;
-				else if (!dX2) this.newTeta =  2*pi - ballTeta;		
+				if (!dY2) this.tan = Infinity;
+				else if (!dX2) this.tan =  0;
 				else {
 					// Find which vertex is involved
 					vX = Math.abs(x-ballX) < Math.abs(x2-ballX) ? x : x2;
 					vY = Math.abs(y-ballY) < Math.abs(y2-ballY) ? y : y2;
 					
 					// Check the siblings before reflecting from the vertex
-					if (bricks[(position.x + (vX == x ? -1 : 1 )).limitTo(0,bricks.length-1)][position.y]
-						|| bricks[position.x][(position.y + (vY == y ? -1 : 1)).limitTo(0,bricks[position.x].length-1)]) {
+					var	near_ud = (position.y + (vY==y ? -1 : +1)).between(0,bricks.length-1)				&& !!bricks[position.y+(vY==y?-1:1)][position.x],
+						near_rl = (position.x + (vX==x ? -1 : +1)).between(0,bricks[position.y].length-1)	&& !!bricks[position.y][position.x+(vX== x?-1:1)];
+					
+					if (near_rl || near_ud) {
 						// If there's a sibling brick the ball should be reflected using the border
-						if (vX == x) this.newTeta =  2*pi - ballTeta;
-						else this.newTeta = ballTeta <= pi ? pi - ballTeta : 3*pi - ballTeta;
+						this.tan = (near_rl ? 0 : Infinity);
 					} else {					
 						// Reflect the ball (-(-deltaX/deltaY) because canvases have inverted Y axis)
-						this.newTeta = Math.reflect((vX-ballX)/(vY-ballY), ballTeta);
+						this.tan = (vX-ballX)/(vY-ballY);
 					}
 				}
 				
@@ -251,9 +252,9 @@ function Game() {
 			for (var j=bricks[0].length-1; j >= 0; j--) { // loop optimization: start from lower ones (bottom)
 				for (var i=bricks.length-1, b; i >= 0; i--) {
 					if (bricks[i][j] && bricks[i][j].collision(x, y, r, teta)) {
-						teta = bricks[i][j].newTeta;
+						teta = Math.reflect(bricks[i][j].tan, teta);
 						if (bricks[i][j].dead) delete bricks[i][j];
-						break; // loop optimization
+						break; // loop optimization: don't bother checking the other bricks after collision
 					}
 				}
 			}
@@ -281,7 +282,7 @@ function Game() {
 			for (var j=0; j < columns; j++) {
 				if (i > 1) { color = 'yellow'; health = 2; }
 				if (i > 4) { color = 'green'; health = 1; }
-				b = new Brick(j*width, i*height, width, height, color, health, {x: i, y: j});
+				b = new Brick(j*width, i*height, width, height, color, health, {x: j, y: i});
 				b.draw();
 				bricks[i].push(b);
 			}

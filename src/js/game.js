@@ -89,6 +89,18 @@ function Game() {
 		this.dead = false;
 		this.tan = 0;
 
+		Object.defineProperties(this, {
+			health: {
+				get: function() {
+					return health;
+				},
+				set: function(n) {
+					health = n;
+					if (health==0) this.dead = true;
+				}
+			}
+		});
+
 		this.draw = function() {
 			c.fillStyle = colors[color][health-1];
 			c.lineWidth = borderW;
@@ -150,13 +162,14 @@ function Game() {
 					vY = Math.abs(y-ballY) < Math.abs(y2-ballY) ? y : y2;
 
 					// Check the siblings before reflecting from the vertex
-					var	near_ud = (position.y + (vY==y ? -1 : +1)).between(0,bricks.length-1)				&& !!bricks[position.y+(vY==y?-1:1)][position.x],
-						near_rl = (position.x + (vX==x ? -1 : +1)).between(0,bricks[position.y].length-1)	&& !!bricks[position.y][position.x+(vX== x?-1:1)],
+					var	near_ud = (position.y + (vY==y ? -1 : +1)).between(0,bricks.length-1)				&& bricks[position.y+(vY==y?-1:1)][position.x],
+						near_rl = (position.x + (vX==x ? -1 : +1)).between(0,bricks[position.y].length-1)	&& bricks[position.y][position.x+(vX== x?-1:1)],
 						color;
 
 					if (near_rl || near_ud) {
 						// If there's a sibling brick the ball should be reflected using the border
 						this.tan = (near_rl ? 0 : Infinity);
+						(near_rl || near_ud).health--;
 						color = (near_rl ? "red" : "blue");
 					} else {
 						// Reflect the ball (-(-deltaX/deltaY) because canvases have inverted Y axis)
@@ -167,7 +180,7 @@ function Game() {
 					debugLines.push(c.fastLine(vX-10*Math.cos(alfa), vY+10*Math.sin(alfa), vX+10*Math.cos(alfa), vY-10*Math.sin(alfa), color, 2));
 				}
 
-				if (--health === 0) this.dead = true;
+				this.health--;
 				return true;
 			} else return false;
 		}

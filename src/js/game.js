@@ -153,6 +153,16 @@ function Game() {
 
 			// If collision
 			if (dX2 + dY2 <= R2) {
+				// Fixing bug: move ball outside the brick
+				while (dX2 + dY2 < R2) {
+					ballX	= (ballX - Math.cos(ballTeta)).limitTo(ballR,gameW-ballR);
+					ballY	= (ballY + Math.sin(ballTeta)).limitTo(ballR,gameH-ballR);
+					dX		= Math.abs(ballX - x - w/2) - w/2;
+					dY		= Math.abs(ballY - y - h/2) - h/2;
+					dX2		= (dX < 0) ? 0 : dX*dX;
+					dY2		= (dY < 0) ? 0 : dY*dY;
+				}
+
 				// Check collision for vertical borders, horizontal borders and vertexes
 				if (!dY2) this.tan = Infinity;
 				else if (!dX2) this.tan =  0;

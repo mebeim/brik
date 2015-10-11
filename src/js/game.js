@@ -260,14 +260,15 @@ function Game() {
 			
 			// Bricks
 			if (y <= Ytreshold) // start checking for collisions with bricks only when the ball is close to the lowest one
-			for (var j=bricks[0].length-1; j >= 0; j--) { // loop optimization: start from lower ones (bottom)
-				for (var i=bricks.length-1, b; i >= 0; i--) {
+			for (var i=bricks[0].length-1, found=false; i >= 0; i--) { // loop optimization: start from lower ones (bottom)
+				for (var j=bricks.length-1; j >= 0; j--) {
 					if (bricks[i][j] && bricks[i][j].collision(x, y, r, teta)) {
 						teta = Math.reflect(bricks[i][j].tan, teta);
 						if (bricks[i][j].dead) delete bricks[i][j];
 						break; // loop optimization: don't bother checking the other bricks after collision
 					}
 				}
+				if (found) break;
 			}
 			
 			// Canvases have inverted Y axis

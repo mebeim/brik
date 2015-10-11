@@ -164,8 +164,8 @@ function Game() {
 				}
 
 				// Check collision for vertical borders, horizontal borders and vertexes
-				if (!dY2) this.tan = Infinity;
-				else if (!dX2) this.tan =  0;
+				if (dY < 0) this.tan = Infinity;
+				else if (dX < 0) this.tan =  0;
 				else {
 					// Find which vertex is involved
 					vX = Math.abs(x-ballX) < Math.abs(x2-ballX) ? x : x2;
@@ -287,7 +287,7 @@ function Game() {
 				for (var j=bricks.length-1; j >= 0; j--) {
 					if (bricks[i][j] && bricks[i][j].collision(x, y, r, teta)) {
 						teta = Math.reflect(bricks[i][j].tan, teta);
-						if (bricks[i][j].dead) delete bricks[i][j];
+						found = true;
 						break; // loop optimization: don't bother checking the other bricks after collision
 					}
 				}
@@ -334,7 +334,8 @@ function Game() {
 	function update() {
 		c.clearRect(0, 0, gameW, gameH);
 
-		for (var i=0; i < bricks.length; i++) for (var j=0, b; j < bricks[i].length; j++) bricks[i][j] && bricks[i][j].draw();
+		for (var i=0; i < bricks.length; i++) for (var j=0, b; j < bricks[i].length; j++)
+			bricks[i][j] && (bricks[i][j].dead && delete bricks[i][j] || bricks[i][j].draw());
 		pad.update();
 		ball.update();
 

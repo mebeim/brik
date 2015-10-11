@@ -180,14 +180,14 @@ function Game() {
 						// If there's a sibling brick the ball should be reflected using the border
 						this.tan = (near_rl ? 0 : Infinity);
 						(near_rl || near_ud).health--;
-						color = (near_rl ? "red" : "blue");
+						//color = (near_rl ? "red" : "blue");	// DEBUG
 					} else {
 						// Reflect the ball (-(-deltaX/deltaY) because canvases have inverted Y axis)
 						this.tan = (vX-ballX)/(vY-ballY);
-						color = "lightgrey";
+						//color = "lightgrey";					// DEBUG
 					}
-					var alfa = Math.atan(this.tan);
-					debugLines.push(c.fastLine(vX-10*Math.cos(alfa), vY+10*Math.sin(alfa), vX+10*Math.cos(alfa), vY-10*Math.sin(alfa), color, 2));
+					/*var alfa = Math.atan(this.tan);			// DEBUG
+					debugLines.push(c.fastLine(vX-10*Math.cos(alfa), vY+10*Math.sin(alfa), vX+10*Math.cos(alfa), vY-10*Math.sin(alfa), color, 2));*/
 				}
 
 				this.health--;
@@ -270,8 +270,8 @@ function Game() {
 			c.fastLine(0, y, gameW, y, 'lightgrey', 2);
 			c.fillText('## DEBUG MODE ##', 50, gameH - 200);
 			c.fillText('θ = ' + (teta/pi*180).toFixed(3) + '°', 50, gameH - 180);
-			c.fillText('m = ' + Math.tan(teta).toFixed(3), 50, gameH - 170); */
-			c.fastLine(x, y, x + 1000*Math.cos(-teta), y + 1000*Math.sin(-teta), 'pink', 2);
+			c.fillText('m = ' + Math.tan(teta).toFixed(3), 50, gameH - 170);
+			c.fastLine(x, y, x + 1000*Math.cos(-teta), y + 1000*Math.sin(-teta), 'pink', 2);*/
 		}
 
 		this.update = function() {
@@ -279,7 +279,7 @@ function Game() {
 			if (x+r >= gameW || x-r <= 0) teta = Math.reflect(Infinity, teta);		// Right and left walls
 			if (y-r <= 0) teta = Math.reflect(0, teta);								// Top wall
 			if (pad.collision(x, y, r, teta)) teta = pad.newTeta;					// Pad
-			/* DEBUG */	if (y+r >= gameH) teta = Math.reflect(0, teta);				// Make pad unnecessary */
+			/* DEBUG	if (y+r >= gameH) teta = Math.reflect(0, teta);				// Make pad unnecessary */
 
 			// Bricks
 			if (y <= Ytreshold) // start checking for collisions with bricks only when the ball is close to the lowest one
@@ -295,7 +295,7 @@ function Game() {
 			}
 
 			// Canvases have inverted Y axis
-			this.y = y = (y - this.speed*Math.sin(teta)).limitTo(r,gameH-r);
+			this.y = y = (y - this.speed*Math.sin(teta)).limitTo(r,gameH+r);
 			this.x = x = (x + this.speed*Math.cos(teta)).limitTo(r,gameW-r);
 			this.teta = teta;
 
@@ -339,7 +339,7 @@ function Game() {
 		pad.update();
 		ball.update();
 
-		for (var i=0; i < debugLines.length; i++) debugLines[i]();
+		// for (var i=0; i < debugLines.length; i++) debugLines[i]();		// DEBUG
 
 		animationID = requestAnimationFrame(update);
 	}

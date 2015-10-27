@@ -74,7 +74,7 @@ function Game() {
 			 * This function returns true if the ball hits the brick, false otherwise.
 			 * It also decreases the brick's health until 0, when the brick dies.
 			 *
-			 * this.newTeta: new angle of the ball after the collision
+			 * this.tan: angular coefficient of the tangent line against which the ball should reflect
 			 * dX: distance from the center of the ball and the nearest vertical border
 			 * dY: distance from the center of the ball and the nearest horizontal border
 			 * vX: x of the nearest vertex
@@ -273,8 +273,17 @@ function Game() {
 	function update() {
 		c.clearRect(0, 0, gameW, gameH);
 
-		for (var i=0; i < bricks.length; i++) for (var j=0, b; j < bricks[i].length; j++)
-			bricks[i][j] && (bricks[i][j].dead && delete bricks[i][j] || bricks[i][j].draw());
+		for (var i=0; i < bricks.length; i++) {
+			for (var j=0, b; j < bricks[i].length; j++) {
+				if (bricks[i][j]) {
+					if (bricks[i][j].dead)
+						delete bricks[i][j];
+					else
+						bricks[i][j].draw();
+				}
+			}
+		}
+
 		pad.update();
 		ball.update();
 

@@ -12,6 +12,7 @@ function Game() {
 			dark_yellow : [/*'hsl(47, 100%, 10%)',*/	'hsl(47, 100%, 20%)',		'hsl(47, 100%, 35%)'	],
 			dark_green	: [/*'hsl(120, 100%, 5%)',		'hsl(120, 100%, 10%)',*/	'hsl(120, 100%, 15%)'	],
 		},
+		sounds		= new Audio(),
 		debugLines 	= new Array(),
 		animationID, pad, c, Ytreshold;
 
@@ -157,6 +158,7 @@ function Game() {
 
 			if (Math.abs(dX) <= r && ballY+ballR >= y && ballTeta.between(pi, 2*pi)) {
 				this.newTeta = pi/2 - dX*(pi/3)/r;
+				sounds.playSound("pong");
 				return true;
 			}
 			return false;
@@ -226,6 +228,7 @@ function Game() {
 				for (var j=bricks.length-1; j >= 0 && !found; j--) {
 					if (bricks[i][j] && bricks[i][j].collision(x, y, r, teta)) {
 						teta = Math.reflect(bricks[i][j].tan, teta);
+						sounds.playSound("pong");
 						found = true; // loop optimization: don't bother checking the other bricks after collision (found=true → breaks both loops)
 					}
 				}

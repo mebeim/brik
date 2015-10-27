@@ -1,6 +1,10 @@
 function Audio() {
 	var self = this,
-		sounds = new Object();
+		sounds = new Object(),
+		media = [
+			{name: 'pong', url: 'src/media/pong1.ogg'}
+		],
+		audioSource;
 		
 	// Load sound
 	function loadSound(name, url) {
@@ -16,14 +20,15 @@ function Audio() {
 		xhr.send();
 	}
 	
+	self.context = new (window.AudioContext || window.webkitAudioContext);
+	audioSource = self.context.createBufferSource();
+	audioSource.connect(self.context.destination);
+	
+	for (var i=0; i < media.length; i++) loadSound(media[i].name, media[i].url);
+	
 	// Play sound
 	self.playSound = function(name) {
-		var source = self.context.createBufferSource();
-		source.buffer = sounds[name];
-		source.connect(self.context.destination);
-		source.start(0);
+		if (audioSource.buffer != sounds[name]) audioSource.buffer = sounds[name];
+		audioSource.start(0);
 	}
-	
-	self.context = new (window.AudioContext || window.webkitAudioContext);
-	loadSound('pong', '/brik/src/media/pong1.ogg');
 }

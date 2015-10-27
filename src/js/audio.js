@@ -25,5 +25,5 @@ function Audio() {
 	}
 	
 	self.context = new (window.AudioContext || window.webkitAudioContext);
-	loadSound('pong', '/src/media/pong1.ogg');
+	loadSound('pong', '/brik/src/media/pong1.ogg');
 }

@@ -309,7 +309,7 @@ function Game() {
 		
 		document.addEventListener('touchstart', function(e) {
 			e.preventDefault();
-			if (e.touches[0].clientX > gameW/2)
+			if (e.touches[0].clientX > innerWidth/2)
 				pad.direction = 'right';
 			else
 				pad.direction = 'left';

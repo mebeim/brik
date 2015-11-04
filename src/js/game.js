@@ -13,7 +13,7 @@ function Game() {
 			dark_green	: [/*'hsl(120, 100%, 5%)',		'hsl(120, 100%, 10%)',*/	'hsl(120, 100%, 15%)'	],
 		},
 		debugLines 	= new Array(),
-		animationID, pad, c, Ytreshold;
+		audio, animationID, pad, c, Ytreshold;
 
 	function Brick(x, y, w, h, color, health, position) {
 		var borderW = w/15,
@@ -92,7 +92,6 @@ function Game() {
 
 			// If collision
 			if (dX2 + dY2 <= R2) {
-				// Fixing bug: move ball outside the brick
 				while (dX2 + dY2 < R2) {
 					ballX	= (ballX - Math.cos(ballTeta)).limitTo(ballR,gameW-ballR);
 					ballY	= (ballY + Math.sin(ballTeta)).limitTo(ballR,gameH-ballR);
@@ -203,34 +202,31 @@ function Game() {
 			c.arc(x, y, r, 0, pi*2);
 			c.closePath();
 			c.fill();
-
-			/* DEBUG
-			c.fastLine(x, 0, x, gameH, 'lightgrey', 2);
-			c.fastLine(0, y, gameW, y, 'lightgrey', 2);
-			c.fillText('## DEBUG MODE ##', 50, gameH - 200);
-			c.fillText('θ = ' + (teta/pi*180).toFixed(3) + '°', 50, gameH - 180);
-			c.fillText('m = ' + Math.tan(teta).toFixed(3), 50, gameH - 170);
-			c.fastLine(x, y, x + 1000*Math.cos(-teta), y + 1000*Math.sin(-teta), 'pink', 2);*/
 		}
 
 		this.update = function() {
 			// Walls
-			if (x+r >= gameW || x-r <= 0) teta = Math.reflect(Infinity, teta);		// Right and left walls
-			if (y-r <= 0) teta = Math.reflect(0, teta);								// Top wall
-			if (pad.collision(x, y, r, teta)) teta = pad.newTeta;					// Pad
-			/* DEBUG	if (y+r >= gameH) teta = Math.reflect(0, teta);				// Make pad unnecessary */
+			if (x+r >= gameW || x-r <= 0) {
+				teta = Math.reflect(Infinity, teta);								// Right and left walls
+				audio.playSound('wall_collide');
+			} else if (y-r <= 0) {													// Top wall
+				teta = Math.reflect(0, teta);
+				audio.playSound('wall_collide');
+			} else if (pad.collision(x, y, r, teta)) {								// Pad
+				teta = pad.newTeta;
+				audio.playSound('wall_collide');
+			}
 
 			// Bricks
 			if (y <= Ytreshold) // start checking for collisions with bricks only when the ball is close to the lowest one
-			for (var i=bricks[0].length-1, found=false; i >= 0; i--) { // loop optimization: start from lower ones (bottom)
-				for (var j=bricks.length-1; j >= 0; j--) {
+			for (var i = bricks[0].length-1, found = false; i >= 0 && !found; i--) { // loop optimization: start from lower ones (bottom)
+				for (var j = bricks.length-1; j >= 0 && !found; j--) {
 					if (bricks[i][j] && bricks[i][j].collision(x, y, r, teta)) {
 						teta = Math.reflect(bricks[i][j].tan, teta);
+						audio.playSound('brick_collide');
 						found = true;
-						break; // loop optimization: don't bother checking the other bricks after collision
 					}
 				}
-				if (found) break;
 			}
 
 			// Canvases have inverted Y axis
@@ -262,12 +258,6 @@ function Game() {
 			}
 			if (i == rows-1) Ytreshold = (i+2)*height;
 		}
-
-		/* DEBUG
-		// Spawn only one red brick
-		b = new Brick(4*width, 7*height, width, height, 'red', 3);
-		b.draw();
-		bricks.push(b); */
 	}
 
 	function update() {
@@ -299,6 +289,7 @@ function Game() {
 		spawnBricks(10, 10, 5);
 		pad = new Pad();
 		ball = new Ball(gameW/2, gameH-(pad.height+1.5e-2*gameW), 1.5e-2*gameW, 1e-2*gameH);	// x, y, radius, speed
+		audio = new Audio();
 
 		document.addEventListener('keydown', function(e) {
 			if (e.keyCode === 37) pad.direction = 'left';

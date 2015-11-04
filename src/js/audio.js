@@ -2,7 +2,8 @@ function Audio() {
 	var self = this,
 		sounds = new Object(),
 		media = [
-			{name: 'pong', url: 'src/media/pong1.ogg'}
+			{name: 'wall_collide', url: 'src/media/pong1.ogg'},
+			{name: 'brick_collide', url: 'src/media/pong2.ogg'}
 		];
 		
 	// Load sound

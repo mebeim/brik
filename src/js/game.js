@@ -299,6 +299,18 @@ function Game() {
 		document.addEventListener('keyup', function(e) {
 			if ((e.keyCode === 37 && pad.direction === 'left') || (e.keyCode === 39 && pad.direction === 'right')) pad.direction = false;
 		});
+		
+		document.addEventListener('touchstart', function(e) {
+			e.preventDefault();
+			if (e.touches[0].clientX > innerWidth/2)
+				pad.direction = 'right';
+			else
+				pad.direction = 'left';
+		});
+		
+		document.addEventListener('touchend', function(e) {
+			pad.direction = false;
+		});
 
 		animationID = requestAnimationFrame(update);
 	}

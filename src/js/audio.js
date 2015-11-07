@@ -5,7 +5,7 @@ function Audio() {
 			{name: 'wall_collide', url: 'src/media/pong1.ogg'},
 			{name: 'brick_collide', url: 'src/media/pong2.ogg'}
 		];
-		
+
 	// Load sound
 	function loadSound(name, url) {
 		var xhr = new XMLHttpRequest();
@@ -16,13 +16,13 @@ function Audio() {
 				sounds[name] = buffer;
 			});
 		}
-		
+
 		xhr.send();
 	}
-	
+
 	self.context = new (window.AudioContext || window.webkitAudioContext);
 	for (var i=0; i < media.length; i++) loadSound(media[i].name, media[i].url);
-	
+
 	// Play sound
 	self.playSound = function(name) {
 		audioSource = self.context.createBufferSource();

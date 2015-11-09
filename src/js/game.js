@@ -13,8 +13,12 @@ function Game() {
 			dark_green	: [/*'hsl(120, 100%, 5%)',		'hsl(120, 100%, 10%)',*/	'hsl(120, 100%, 15%)'	],
 		},
 		debugLines 	= new Array(),
-		audio, animationID, pad, c, Ytreshold;
+		audio, animationID, pad, c, Ythreshold;
 
+
+	/* ----------------------- *
+	 *    Brick Constructor    *
+	 * ----------------------- */
 	function Brick(x, y, w, h, color, health, position) {
 		var borderW = w/15,
 			x2 = x+w,
@@ -134,6 +138,10 @@ function Game() {
 		}
 	}
 
+
+	/* --------------------- *
+	 *    Pad Constructor    *
+	 * --------------------- */
 	function Pad() {
 		var r = 7e-2*gameW,
 			h = 1e-2*gameH,
@@ -186,6 +194,10 @@ function Game() {
 		draw();
 	}
 
+
+	/* ---------------------- *
+	 *    Ball Constructor    *
+	 * ---------------------- */
 	function Ball(initX, initY, r, speed) {
 		var x = initX,
 			y = initY,
@@ -218,7 +230,7 @@ function Game() {
 			}
 
 			// Bricks
-			if (y <= Ytreshold) // start checking for collisions with bricks only when the ball is close to the lowest one
+			if (y <= Ythreshold) // start checking for collisions with bricks only when the ball is close to the lowest one
 			for (var i = bricks[0].length-1, found = false; i >= 0 && !found; i--) { // loop optimization: start from lower ones (bottom)
 				for (var j = bricks.length-1; j >= 0 && !found; j--) {
 					if (bricks[i][j] && bricks[i][j].collision(x, y, r, teta)) {
@@ -256,7 +268,7 @@ function Game() {
 				b.draw();
 				bricks[i].push(b);
 			}
-			if (i == rows-1) Ytreshold = (i+2)*height;
+			if (i == rows-1) Ythreshold = (i+2)*height;
 		}
 	}
 
@@ -281,6 +293,11 @@ function Game() {
 
 		animationID = requestAnimationFrame(update);
 	}
+
+	/* ~~~~~~~~~~~~~~~~~~~~~~~~ *
+	 *  // End Constructors //  *
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~ */
+
 
 	this.start = function() {
 		CANVAS.width = CANVAS.height = gameW > gameH ? gameW = gameH : gameH = gameW;

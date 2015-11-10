@@ -13,7 +13,7 @@ function Game() {
 			dark_green	: [/*'hsl(120, 100%, 5%)',		'hsl(120, 100%, 10%)',*/	'hsl(120, 100%, 15%)'	],
 		},
 		debugLines 	= new Array(),
-		audio, animationID, pad, c, Ythreshold;
+		sounds, animationID, pad, c, Ythreshold;
 
 
 	/* ----------------------- *
@@ -220,13 +220,13 @@ function Game() {
 			// Walls
 			if (x+r >= gameW || x-r <= 0) {
 				teta = Math.reflect(Infinity, teta);								// Right and left walls
-				audio.playSound('wall_collide');
+				sounds.play('wall_collide');
 			} else if (y-r <= 0) {													// Top wall
 				teta = Math.reflect(0, teta);
-				audio.playSound('wall_collide');
+				sounds.play('wall_collide');
 			} else if (pad.collision(x, y, r, teta)) {								// Pad
 				teta = pad.newTeta;
-				audio.playSound('wall_collide');
+				sounds.play('wall_collide');
 			}
 
 			// Bricks
@@ -235,7 +235,7 @@ function Game() {
 				for (var j = bricks.length-1; j >= 0 && !found; j--) {
 					if (bricks[i][j] && bricks[i][j].collision(x, y, r, teta)) {
 						teta = Math.reflect(bricks[i][j].tan, teta);
-						audio.playSound('brick_collide');
+						sounds.play('brick_collide');
 						found = true;
 					}
 				}
@@ -306,7 +306,7 @@ function Game() {
 		spawnBricks(10, 10, 5);
 		pad = new Pad();
 		ball = new Ball(gameW/2, gameH-(pad.height+1.5e-2*gameW), 1.5e-2*gameW, 1e-2*gameH);	// x, y, radius, speed
-		audio = new Audio();
+		sounds = new Sounds();
 
 		document.addEventListener('keydown', function(e) {
 			if (e.keyCode === 37) pad.direction = 'left';

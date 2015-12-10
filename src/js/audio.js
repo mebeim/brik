@@ -9,11 +9,9 @@ function Sounds() {
 	// Load sound
 	function load(name, url) {
 		var xhr = new XMLHttpRequest();
-		console.log(this, this.Sounds);
 		xhr.open('GET', url, true);
 		xhr.responseType = 'arraybuffer';
 		xhr.onload = function() {
-			console.log(xhr.response);
 			_self.context.decodeAudioData(xhr.response, function(buffer) {
 				buffers[name] = buffer;
 			}, function(err) {
@@ -23,11 +21,15 @@ function Sounds() {
 
 		xhr.send();
 	}
-
-	_self.context = new (window.AudioContext || window.webkitAudioContext);
-	_self.supported = true;
 	
-	for (var i=0; i < media.length; i++) load(media[i].name, media[i].url);
+	window.AudioContext = window.AudioContext || window.webkitAudioContext;
+	_self.context = window.AudioContext && new (window.AudioContext);
+	_self.supported = !!_self.context;
+	
+	if (_self.supported) {
+		for (var i=0; i < media.length; i++)
+			load(media[i].name, media[i].url);
+	}
 
 	// Play sound
 	_self.play = function(name) {

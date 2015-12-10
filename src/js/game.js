@@ -15,11 +15,22 @@ function Game() {
 		debugLines 	= new Array(),
 		sounds, animationID, pad, c, Ythreshold;
 
-
-	/* ----------------------- *
-	 *    Brick Constructor    *
-	 * ----------------------- */
+	/* PRIVATE */
+	
 	function Brick(x, y, w, h, color, health, position) {
+		/**
+		 * Brick(s) constructor
+		 * @param {float}	x			The x coordinate of the upper left vertex of the brick.
+		 * @param {float}	y			The y coordinate of the upper left vertex of the brick.
+		 * @param {float}	w			The height of the brick.
+		 * @param {float}	h			The height of the brick.
+		 * @param {string}	color		A string containing a valid CSS3 color.
+		 * @param {int}		health		The health of the brick (how many times it must be hitten to die).
+		 * @param {Object}	position	The position of the brick in the bricks' grid.
+		 * @param {float}	position.x	The x coordinate of the brick in the brick's grid.
+		 * @param {float}	position.y	The y coordinate of the brick in the brick's grid.
+		 */
+		 
 		var borderW = w/15,
 			x2 = x+w,
 			y2 = y+h;
@@ -73,7 +84,6 @@ function Game() {
 		}
 
 		this.collision = function(ballX, ballY, ballR, ballTeta) {
-
 			/*
 			 * This function returns true if the ball hits the brick, false otherwise.
 			 * It also decreases the brick's health until 0, when the brick dies.
@@ -138,11 +148,11 @@ function Game() {
 		}
 	}
 
-
-	/* --------------------- *
-	 *    Pad Constructor    *
-	 * --------------------- */
 	function Pad() {
+		/**
+		 * Pad's constructor.
+		 */
+
 		var r = 7e-2*gameW,
 			h = 1e-2*gameH,
 			x = gameW/2,
@@ -194,11 +204,15 @@ function Game() {
 		draw();
 	}
 
-
-	/* ---------------------- *
-	 *    Ball Constructor    *
-	 * ---------------------- */
 	function Ball(initX, initY, r, speed) {
+		/**
+		 * Ball's constructor.
+		 * @param {float} initX The starting x coordinate of the ball.
+		 * @param {float} initY	The starting y coordinate of the ball.
+		 * @param {float} r		The radius of the ball.
+		 * @param {float} speed	The speed of the ball (in pixels per frame).
+		 */
+
 		var x = initX,
 			y = initY,
 			teta = Math.random()*4*pi/6 + pi/6;
@@ -293,11 +307,8 @@ function Game() {
 
 		animationID = requestAnimationFrame(update);
 	}
-
-	/* ~~~~~~~~~~~~~~~~~~~~~~~~ *
-	 *  // End Constructors //  *
-	 * ~~~~~~~~~~~~~~~~~~~~~~~~ */
-
+	
+	/* PUBLIC */
 
 	this.start = function() {
 		CANVAS.width = CANVAS.height = gameW > gameH ? gameW = gameH : gameH = gameW;
@@ -329,6 +340,14 @@ function Game() {
 			pad.direction = false;
 		});
 
+		animationID = requestAnimationFrame(update);
+	}
+	
+	this.freeze = function() {
+		cancelAnimationFrame(animationID);
+	}
+	
+	this.unfreeze = function() {
 		animationID = requestAnimationFrame(update);
 	}
 }

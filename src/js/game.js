@@ -30,13 +30,15 @@ function Game() {
 		bmd.ctx.strokeStyle = colors['dark_' + color][health-1];
 
 		bmd.ctx.fillRect(0, 0, w, h);
-		bmd.ctx.strokeRect(borderW/2, borderW/2, w-borderW, h-borderW);
+		bmd.ctx.strokeRect(borderW/2+0.5, borderW/2+0.5, w-borderW-0.5, h-borderW-0.5);
 		
 		var obj = game.add.sprite(x, y, bmd);
+		obj.bmd = bmd;
 		obj.color = color;
 		obj.health = health;
 		
 		game.physics.arcade.enable(obj);
+		obj.anchor.setTo(0, 0);
 		obj.body.immovable = true;
 		obj.body.bounce.set(1);
 		
@@ -52,7 +54,6 @@ function Game() {
 			b;
 
 		for (var i=0; i < rows; i++) {
-			//bricks.push(new Array);
 			for (var j=0; j < columns; j++) {
 				if (i > 1) { color = 'yellow'; health = 2; }
 				if (i > 4) { color = 'green'; health = 1; }
@@ -74,6 +75,7 @@ function Game() {
 		    b;
 		
 		brick.destroy();
+		brick.bmd.destroy();
 		
 		if (--l) {
 			b = createBrick(x, y, w, h, c, l);
@@ -94,12 +96,12 @@ function Game() {
 		bmd.ctx.fillRect(0, 0, 2*r, h);
 
 		var obj = game.add.sprite(gameW/2, gameH, bmd);
-		obj.anchor.setTo(0.5, 1);
 		
 		obj.r = r;
 		obj.setSpeed = speed;
 		
 		game.physics.arcade.enable(obj);
+		obj.anchor.setTo(0.5, 1);
 		obj.body.immovable = true;
 		obj.body.bounce.set(1);
 		obj.body.collideWorldBounds = true;
@@ -133,14 +135,16 @@ function Game() {
 		bmd.ctx.fill();
 		
 		var obj = game.add.sprite(x, y, bmd);
-		obj.anchor.setTo(0.5, 0.5);
 		
 		var teta = Math.random()*4*pi/6 + pi/6;
 		
 		game.physics.arcade.enable(obj);
+		obj.anchor.setTo(0.5, 0.5);
+		obj.body.setCircle(r);
 		obj.body.bounce.set(1);
 		obj.body.collideWorldBounds = true;
-		obj.body.velocity.set(speed*Math.cos(teta), -speed*Math.sin(teta));
+		obj.body.velocity.x = speed*Math.cos(teta);
+		obj.body.velocity.y = -speed*Math.sin(teta);
 		
 		return obj;
 	

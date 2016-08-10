@@ -1,9 +1,10 @@
 function Game() {
+
 	var CANVAS		= _get('#game-canvas'),
 		gameW		= _get('#container').getBoundingClientRect().width,
 		gameH		= _get('#container').getBoundingClientRect().height,
-		bricks		= new Array,
-		pi			= Math.PI,
+		gameSize	= gameW > gameH ? gameW = gameH : gameH = gameW,
+		pi = Math.PI,
 		colors = {
 			red			: ['hsl(0, 100%, 15%)',			'hsl(0, 100%, 30%)',		'hsl(0, 100%, 50%)'		],
 			yellow		: [/*'hsl(51, 100%, 15%)',*/	'hsl(51, 100%, 30%)',		'hsl(51, 100%, 50%)'	],
@@ -12,261 +13,38 @@ function Game() {
 			dark_yellow : [/*'hsl(47, 100%, 10%)',*/	'hsl(47, 100%, 20%)',		'hsl(47, 100%, 35%)'	],
 			dark_green	: [/*'hsl(120, 100%, 5%)',		'hsl(120, 100%, 10%)',*/	'hsl(120, 100%, 15%)'	],
 		},
-		debugLines 	= new Array(),
-		sounds, animationID, pad, c, Ythreshold;
+		game_ns = this;
+		//game, bricks, pad, ball, cursors, pointer;
 
-	/* PRIVATE */
+
+	/**
+	 * Brick(s) stuff
+	 */
+	function createBrick(x, y, w, h, color, health) {
+
+		var borderW = w/15;
+		var bmd = game.add.bitmapData(w, h);
+		
+		bmd.ctx.fillStyle = colors[color][health-1];
+		bmd.ctx.lineWidth = borderW;
+		bmd.ctx.strokeStyle = colors['dark_' + color][health-1];
+
+		bmd.ctx.fillRect(0, 0, w, h);
+		bmd.ctx.strokeRect(borderW/2, borderW/2, w-borderW, h-borderW);
+		
+		var obj = game.add.sprite(x, y, bmd);
+		obj.color = color;
+		obj.health = health;
+		
+		game.physics.arcade.enable(obj);
+		obj.body.immovable = true;
+		obj.body.bounce.set(1);
+		
+		return obj;
+
+	}
 	
-	function Brick(x, y, w, h, color, health, position) {
-		/**
-		 * Brick(s) constructor
-		 * @param {float}	x			The x coordinate of the upper left vertex of the brick.
-		 * @param {float}	y			The y coordinate of the upper left vertex of the brick.
-		 * @param {float}	w			The height of the brick.
-		 * @param {float}	h			The height of the brick.
-		 * @param {string}	color		A string containing a valid CSS3 color.
-		 * @param {int}		health		The health of the brick (how many times it must be hitten to die).
-		 * @param {Object}	position	The position of the brick in the bricks' grid.
-		 * @param {float}	position.x	The x coordinate of the brick in the brick's grid.
-		 * @param {float}	position.y	The y coordinate of the brick in the brick's grid.
-		 */
-		 
-		var borderW = w/15,
-			x2 = x+w,
-			y2 = y+h;
-
-
-		this.x = x;
-		this.y = y;
-		this.x2 = x2;
-		this.y2 = y2;
-		this.dead = false;
-		this.tan = 0;
-
-		Object.defineProperties(this, {
-			health: {
-				get: function() {
-					return health;
-				},
-				set: function(n) {
-					health = n;
-					if (health==0) this.dead = true;
-				}
-			}
-		});
-
-		this.draw = function() {
-			c.fillStyle = colors[color][health-1];
-			c.lineWidth = borderW;
-			c.strokeStyle = colors['dark_' + color][health-1];
-
-			c.fillRect(x, y, w, h);
-			c.strokeRect(x+borderW/2, y+borderW/2, w-borderW, h-borderW);
-
-			/* DEBUG
-			// Ball hitbox on the brick (to be done with only 1 brick)
-			var dX, dY, R = 1.5/100*gameW;
-			for (var i=x-R; i<x2+R; i++) {
-				for (var j=y-R; j<y2+R; j++) {
-					dX = Math.abs(i - x - w/2) - w/2;
-					dY = Math.abs(j - y - h/2) - h/2;
-
-					dX = dX >= 0 ? dX : 0;
-					dY = dY >= 0 ? dY : 0;
-
-					if (dX*dX + dY*dY <= R*R && (dX || dY)) {
-						if (dX && dY) c.fillStyle = 'rgba(0, 0, 0, 1)';
-						else c.fillStyle = 'rgba(0, 0, 0, 0.5)';
-						c.fillRect(i, j, 1, 1);
-					}
-				}
-			} */
-		}
-
-		this.collision = function(ballX, ballY, ballR, ballTeta) {
-			/*
-			 * This function returns true if the ball hits the brick, false otherwise.
-			 * It also decreases the brick's health until 0, when the brick dies.
-			 *
-			 * this.tan: angular coefficient of the tangent line against which the ball should reflect
-			 * dX: distance from the center of the ball and the nearest vertical border
-			 * dY: distance from the center of the ball and the nearest horizontal border
-			 * vX: x of the nearest vertex
-			 * vY: y of the nearest vertex
-			 *
-			 */
-
-			var dX = Math.abs(ballX - x - w/2) - w/2,
-				dY = Math.abs(ballY - y - h/2) - h/2,
-				R2 = ballR*ballR,
-				vX, vY, dX2, dY2;
-
-			dX2 = (dX < 0) ? 0 : dX*dX;
-			dY2 = (dY < 0) ? 0 : dY*dY;
-
-			// If collision
-			if (dX2 + dY2 <= R2) {
-				while (dX2 + dY2 < R2) {
-					ballX	= (ballX - Math.cos(ballTeta)).limitTo(ballR,gameW-ballR);
-					ballY	= (ballY + Math.sin(ballTeta)).limitTo(ballR,gameH-ballR);
-					dX		= Math.abs(ballX - x - w/2) - w/2;
-					dY		= Math.abs(ballY - y - h/2) - h/2;
-					dX2		= (dX < 0) ? 0 : dX*dX;
-					dY2		= (dY < 0) ? 0 : dY*dY;
-				}
-
-				// Check collision for vertical borders, horizontal borders and vertexes
-				if (dY < 0) this.tan = Infinity;
-				else if (dX < 0) this.tan =  0;
-				else {
-					// Find which vertex is involved
-					vX = Math.abs(x-ballX) < Math.abs(x2-ballX) ? x : x2;
-					vY = Math.abs(y-ballY) < Math.abs(y2-ballY) ? y : y2;
-
-					// Check the siblings before reflecting from the vertex
-					var	near_ud = (position.y + (vY==y ? -1 : +1)).between(0,bricks.length-1)				&& bricks[position.y+(vY==y?-1:1)][position.x],
-						near_rl = (position.x + (vX==x ? -1 : +1)).between(0,bricks[position.y].length-1)	&& bricks[position.y][position.x+(vX== x?-1:1)],
-						color;
-
-					if (near_rl || near_ud) {
-						// If there's a sibling brick the ball should be reflected using the border
-						this.tan = (near_rl ? 0 : Infinity);
-						(near_rl || near_ud).health--;
-						//color = (near_rl ? "red" : "blue");	// DEBUG
-					} else {
-						// Reflect the ball (-(-deltaX/deltaY) because canvases have inverted Y axis)
-						this.tan = (vX-ballX)/(vY-ballY);
-						//color = "lightgrey";					// DEBUG
-					}
-					/*var alfa = Math.atan(this.tan);			// DEBUG
-					debugLines.push(c.fastLine(vX-10*Math.cos(alfa), vY+10*Math.sin(alfa), vX+10*Math.cos(alfa), vY-10*Math.sin(alfa), color, 2));*/
-				}
-
-				this.health--;
-				return true;
-			} else return false;
-		}
-	}
-
-	function Pad() {
-		/**
-		 * Pad's constructor.
-		 */
-
-		var r = 7e-2*gameW,
-			h = 1e-2*gameH,
-			x = gameW/2,
-			y = gameH-h;
-
-		this.height = h;
-
-		function draw() {
-			c.fillStyle = 'white';
-			c.fillRect(x-r, y, 2*r, h);
-		}
-
-		this.speed = 1.5e-2*gameH;
-		this.direction = false;
-		this.newTeta = 0;
-
-		this.collision = function(ballX, ballY, ballR, ballTeta) {
-			var dX = ballX - x;
-
-			if (Math.abs(dX) <= r && ballY+ballR >= y && ballTeta.between(pi, 2*pi)) {
-				this.newTeta = pi/2 - dX*(pi/3)/r;
-				return true;
-			}
-			return false;
-		}
-
-		this.update = function() {
-			if (this.direction === 'left') {
-				x -= this.speed;
-
-				if (x-r < 0) {
-					this.direction = false;
-					x = r;
-				}
-			}
-
-			if (this.direction === 'right') {
-				x += this.speed;
-
-				if (x+r > gameW) {
-					this.direction = false;
-					x = gameW-r;
-				}
-			}
-
-			draw();
-		}
-
-		draw();
-	}
-
-	function Ball(initX, initY, r, speed) {
-		/**
-		 * Ball's constructor.
-		 * @param {float} initX The starting x coordinate of the ball.
-		 * @param {float} initY	The starting y coordinate of the ball.
-		 * @param {float} r		The radius of the ball.
-		 * @param {float} speed	The speed of the ball (in pixels per frame).
-		 */
-
-		var x = initX,
-			y = initY,
-			teta = Math.random()*4*pi/6 + pi/6;
-
-		this.x = x;
-		this.y = y;
-		this.teta = teta;
-		this.speed = speed;
-
-		function draw() {
-			c.fillStyle = 'lightgrey';
-			c.beginPath();
-			c.arc(x, y, r, 0, pi*2);
-			c.closePath();
-			c.fill();
-		}
-
-		this.update = function() {
-			// Walls
-			if (x+r >= gameW || x-r <= 0) {
-				teta = Math.reflect(Infinity, teta);								// Right and left walls
-				sounds.play('wall_collide');
-			} else if (y-r <= 0) {													// Top wall
-				teta = Math.reflect(0, teta);
-				sounds.play('wall_collide');
-			} else if (pad.collision(x, y, r, teta)) {								// Pad
-				teta = pad.newTeta;
-				sounds.play('wall_collide');
-			}
-
-			// Bricks
-			if (y <= Ythreshold) // start checking for collisions with bricks only when the ball is close to the lowest one
-			for (var i = bricks[0].length-1, found = false; i >= 0 && !found; i--) { // loop optimization: start from lower ones (bottom)
-				for (var j = bricks.length-1; j >= 0 && !found; j--) {
-					if (bricks[i][j] && bricks[i][j].collision(x, y, r, teta)) {
-						teta = Math.reflect(bricks[i][j].tan, teta);
-						sounds.play('brick_collide');
-						found = true;
-					}
-				}
-			}
-
-			// Canvases have inverted Y axis
-			this.y = y = (y - this.speed*Math.sin(teta)).limitTo(r,gameH+r);
-			this.x = x = (x + this.speed*Math.cos(teta)).limitTo(r,gameW-r);
-			this.teta = teta;
-
-			draw();
-		}
-
-		draw();
-	}
-
-	function spawnBricks(rows, columns, height) {
+	function spawnBricks(group, rows, columns, height) {
 		var width = gameW/columns,
 			height = height/100*gameH,
 			color = 'red',
@@ -274,80 +52,147 @@ function Game() {
 			b;
 
 		for (var i=0; i < rows; i++) {
-			bricks.push(new Array);
+			//bricks.push(new Array);
 			for (var j=0; j < columns; j++) {
 				if (i > 1) { color = 'yellow'; health = 2; }
 				if (i > 4) { color = 'green'; health = 1; }
-				b = new Brick(j*width, i*height, width, height, color, health, {x: j, y: i});
-				b.draw();
-				bricks[i].push(b);
+				b = createBrick(j*width, i*height, width, height, color, health);
+				group.add(b);
 			}
-			if (i == rows-1) Ythreshold = (i+2)*height;
 		}
 	}
+	
+	function updateBrick(ball, brick) {
+	
+		var l = brick.health,
+		    c = brick.color,
+		    x = brick.x,
+		    y = brick.y,
+		    w = brick.width,
+		    h = brick.height,
+		    g = brick.parent,
+		    b;
+		
+		brick.destroy();
+		
+		if (--l) {
+			b = createBrick(x, y, w, h, c, l);
+			g.add(b);
+		}
+	
+	}
 
+
+	/**
+	 * Pad stuff
+	 */
+	function createPad(r, h, speed) {
+
+		var bmd = game.add.bitmapData(2*r, h);
+
+		bmd.ctx.fillStyle = 'white';
+		bmd.ctx.fillRect(0, 0, 2*r, h);
+
+		var obj = game.add.sprite(gameW/2, gameH, bmd);
+		obj.anchor.setTo(0.5, 1);
+		
+		obj.r = r;
+		obj.setSpeed = speed;
+		
+		game.physics.arcade.enable(obj);
+		obj.body.immovable = true;
+		obj.body.bounce.set(1);
+		obj.body.collideWorldBounds = true;
+		
+		return obj;
+
+	}
+	
+	function updatePad(ball, pad) {
+	
+		var dx   = ball.x - pad.x;
+			teta = pi/2 - dx*(pi/3)/pad.r;
+		
+		ball.body.velocity.x = Math.cos(teta) * ball.body.speed;
+		ball.body.velocity.y = -Math.sin(teta) * ball.body.speed;
+	
+	}
+
+	
+	/**
+	 * Ball stuff
+	 */
+	function createBall(x, y, r, speed) {
+	
+		var bmd = game.add.bitmapData(2*r, 2*r);
+	
+		bmd.ctx.fillStyle = 'lightgrey';
+		bmd.ctx.beginPath();
+		bmd.ctx.arc(r, r, r, 0, pi*2);
+		bmd.ctx.closePath();
+		bmd.ctx.fill();
+		
+		var obj = game.add.sprite(x, y, bmd);
+		obj.anchor.setTo(0.5, 0.5);
+		
+		var teta = Math.random()*4*pi/6 + pi/6;
+		
+		game.physics.arcade.enable(obj);
+		obj.body.bounce.set(1);
+		obj.body.collideWorldBounds = true;
+		obj.body.velocity.set(speed*Math.cos(teta), -speed*Math.sin(teta));
+		
+		return obj;
+	
+	}
+
+
+	/**
+	 * Other stuff
+	 */
+
+	function handleResize() {
+	
+		gameW		= _get('#container').getBoundingClientRect().width;
+		gameH		= _get('#container').getBoundingClientRect().height;
+		gameSize	= gameW > gameH ? gameW = gameH : gameH = gameW;
+		
+		game.scale.setGameSize(gameSize, gameSize);
+	
+	}
+	
+	function init() {
+		
+		cursors = game.input.keyboard.createCursorKeys();
+		pointer = game.input.pointer1;
+		
+		game.physics.startSystem(Phaser.Physics.ARCADE);
+		
+		bricks = game.add.group();
+		spawnBricks(bricks, 10, 10, 5);
+	
+		pad = createPad(7e-2*gameW, 1e-2*gameH, 0.65*gameH-10);
+		ball = createBall(gameW/2, gameH-(1e-2*gameH+1.5e-2*gameW), 1.5e-2*gameW, 0.65*gameH);
+		
+	}
+	
 	function update() {
-		c.clearRect(0, 0, gameW, gameH);
-
-		for (var i=0; i < bricks.length; i++) {
-			for (var j=0, b; j < bricks[i].length; j++) {
-				if (bricks[i][j]) {
-					if (bricks[i][j].dead)
-						delete bricks[i][j];
-					else
-						bricks[i][j].draw();
-				}
-			}
-		}
-
-		pad.update();
-		ball.update();
-
-		// for (var i=0; i < debugLines.length; i++) debugLines[i]();		// DEBUG
-
-		animationID = requestAnimationFrame(update);
-	}
 	
-	/* PUBLIC */
+	    game.physics.arcade.collide(ball, bricks, updateBrick);
+	    game.physics.arcade.collide(ball, pad, updatePad);
 
-	this.start = function() {
-		CANVAS.width = CANVAS.height = gameW > gameH ? gameW = gameH : gameH = gameW;
-		c = CANVAS.getContext('2d');
+    	pad.body.velocity.x = 0;
 
-		spawnBricks(10, 10, 5);
-		pad = new Pad();
-		ball = new Ball(gameW/2, gameH-(pad.height+1.5e-2*gameW), 1.5e-2*gameW, 1e-2*gameH);	// x, y, radius, speed
-		sounds = new Sounds();
+		if (cursors.left.isDown || (pointer.isDown && pointer.x < gameW/2))
+			pad.body.velocity.x = -pad.setSpeed;
 
-		document.addEventListener('keydown', function(e) {
-			if (e.keyCode === 37) pad.direction = 'left';
-			if (e.keyCode === 39) pad.direction = 'right';
-		});
+		else if (cursors.right.isDown || (pointer.isDown && pointer.x >= gameW/2))
+			pad.body.velocity.x = pad.setSpeed;
 
-		document.addEventListener('keyup', function(e) {
-			if ((e.keyCode === 37 && pad.direction === 'left') || (e.keyCode === 39 && pad.direction === 'right')) pad.direction = false;
-		});
-
-		document.addEventListener('touchstart', function(e) {
-			e.preventDefault();
-			if (e.touches[0].clientX > innerWidth/2)
-				pad.direction = 'right';
-			else
-				pad.direction = 'left';
-		});
-
-		document.addEventListener('touchend', function(e) {
-			pad.direction = false;
-		});
-
-		animationID = requestAnimationFrame(update);
 	}
+
+	var game = this.phaser = new Phaser.Game(gameSize, gameSize, Phaser.AUTO, 'container', {create: init, update: update}, true);
 	
-	this.freeze = function() {
-		cancelAnimationFrame(animationID);
-	}
-	
-	this.unfreeze = function() {
-		animationID = requestAnimationFrame(update);
-	}
+	//window.addEventListener("resize", handleResize);
+
 }

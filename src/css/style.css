@@ -13,7 +13,7 @@ body {
 	left: 0;
 }
 
-#game-canvas {
+#container canvas {
 	display: block;
 	width: auto;
 	height: auto;
@@ -25,15 +25,15 @@ body {
 }
 
 @media screen and (orientation: landscape) {
-	#game-canvas {
-		width: 100vh;
-		height: 100vh;
+	#container canvas {
+		width: 100vh !important;
+		height: 100vh !important;
 	}
 }
 
 @media screen and (orientation: portrait) {
-	#game-canvas {
-		width: 100vw;
-		height: 100vw;
+	#container canvas {
+		width: 100vw !important;
+		height: 100vw !important;
 	}
 }

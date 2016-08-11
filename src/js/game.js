@@ -13,7 +13,8 @@ function Game() {
 			dark_yellow : [/*'hsl(47, 100%, 10%)',*/	'hsl(47, 100%, 20%)',		'hsl(47, 100%, 35%)'	],
 			dark_green	: [/*'hsl(120, 100%, 5%)',		'hsl(120, 100%, 10%)',*/	'hsl(120, 100%, 15%)'	],
 		},
-		game_ns = this;
+		game_ns = this,
+		brick_sound, wall_sound;
 		//game, bricks, pad, ball, cursors, pointer;
 
 
@@ -76,6 +77,7 @@ function Game() {
 		
 		brick.destroy();
 		brick.bmd.destroy();
+		brick_sound.play();
 		
 		if (--l) {
 			b = createBrick(x, y, w, h, c, l);
@@ -117,6 +119,7 @@ function Game() {
 		
 		ball.body.velocity.x = Math.cos(teta) * ball.body.speed;
 		ball.body.velocity.y = -Math.sin(teta) * ball.body.speed;
+		wall_sound.play();
 	
 	}
 
@@ -146,6 +149,9 @@ function Game() {
 		obj.body.velocity.x = speed*Math.cos(teta);
 		obj.body.velocity.y = -speed*Math.sin(teta);
 		
+		obj.body.onWorldBounds = new Phaser.Signal();
+		obj.body.onWorldBounds.add(function(){ wall_sound.play(); });
+		
 		return obj;
 	
 	}
@@ -165,7 +171,17 @@ function Game() {
 	
 	}
 	
+	function preload() {
+	
+		game.load.audio("pong1", "src/media/pong1.mp3");
+		game.load.audio("pong2", "src/media/pong2.mp3");
+	
+	}
+	
 	function init() {
+		
+		wall_sound = game.sound.add("pong1");
+		brick_sound = game.sound.add("pong2");
 		
 		cursors = game.input.keyboard.createCursorKeys();
 		pointer = game.input.pointer1;
@@ -195,7 +211,7 @@ function Game() {
 
 	}
 
-	var game = this.phaser = new Phaser.Game(gameSize, gameSize, Phaser.AUTO, 'container', {create: init, update: update}, true);
+	var game = this.phaser = new Phaser.Game(gameSize, gameSize, Phaser.AUTO, 'container', {preload: preload, create: init, update: update}, true);
 	
 	//window.addEventListener("resize", handleResize);
 

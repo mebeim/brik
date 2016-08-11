@@ -140,7 +140,7 @@ function Game() {
 		
 		game.physics.arcade.enable(obj);
 		obj.anchor.setTo(0.5, 0.5);
-		obj.body.setCircle(r);
+		//obj.body.setCircle(r); // not working in Phaser v2.6.1
 		obj.body.bounce.set(1);
 		obj.body.collideWorldBounds = true;
 		obj.body.velocity.x = speed*Math.cos(teta);
